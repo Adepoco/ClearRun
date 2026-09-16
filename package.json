@@ -1,0 +1,27 @@
+{
+  "name": "clearrun",
+  "version": "0.1.0",
+  "private": false,
+  "license": "MIT",
+  "description": "ClearRun open-core — honesty verdict contract, SDK, CLI, vendors, security, scoring UI mapping.",
+  "workspaces": [
+    "packages/core-types",
+    "packages/cli",
+    "packages/vendors",
+    "packages/security",
+    "packages/scoring",
+    "packages/sdk"
+  ],
+  "scripts": {
+    "build": "npm run build:packages",
+    "build:packages": "npm run build -w @clearrun/core-types && npm run build -w @clearrun/sdk && npm run build -w @clearrun/scoring && npm run build -w @clearrun/security && npm run build -w @clearrun/vendors && npm run build -w @clearrun/cli",
+    "validate:no-placeholders": "node scripts/validate_no_placeholders.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

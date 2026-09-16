@@ -1,0 +1,20 @@
+{
+  "name": "@clearrun/cli",
+  "version": "1.0.0",
+  "description": "ClearRun CLI – Score AI responses for reliability",
+  "license": "MIT",
+  "bin": {
+    "clearrun": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}

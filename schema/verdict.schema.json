@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://clearrun.net/schema/verdict.schema.json",
+  "title": "ClearRun Honesty Verdict",
+  "description": "The ONLY contract shared between the open ClearRun integration surface and the closed ClearRun scoring/governance kernel. The kernel (private) produces a Verdict; open packages (SDK, CLI, embed UI) consume it. No scoring logic, protocol internals, or governance state may cross this boundary — only the shape below.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdictId",
+    "schemaVersion",
+    "scoringVersion",
+    "score",
+    "grade",
+    "risk",
+    "failureCategories",
+    "confidenceInterval",
+    "summary",
+    "timestamp"
+  ],
+  "properties": {
+    "verdictId": {
+      "type": "string",
+      "description": "Opaque, stable identifier for this verdict (used for public verification lookups).",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "description": "Version of this verdict contract (semver). Bumped only when the shared shape changes.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "scoringVersion": {
+      "type": "string",
+      "description": "Opaque version tag of the closed scoring kernel that produced this verdict. The formula behind it is NOT exposed."
+    },
+    "score": {
+      "type": ["number", "null"],
+      "description": "Numeric honesty score 0-100, or null when UNDETERMINED / not configured. Score reflects confidence-justification alignment, never truth.",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "grade": {
+      "type": "string",
+      "description": "Human-facing band label derived from the score. Never uses forbidden words (Correct/Safe/Approved/Trusted).",
+      "enum": [
+        "Well supported",
+        "Generally reliable",
+        "Verify before use",
+        "High risk",
+        "Likely misleading",
+        "Not configured"
+      ]
+    },
+    "risk": {
+      "type": "string",
+      "description": "Coarse risk tier for the evaluated response.",
+      "enum": ["low", "moderate", "elevated", "high"]
+    },
+    "failureCategories": {
+      "type": "array",
+      "description": "Named categories of detected honesty failures. Category names only — no protocol internals, weights, or thresholds.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "overconfidence",
+          "unjustified_assertion",
+          "internal_inconsistency",
+          "ambiguity_suppression",
+          "confidence_domain_mismatch",
+          "unilateral_assertion",
+          "scope_drift",
+          "fabrication_risk"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "confidenceInterval": {
+      "type": ["object", "null"],
+      "description": "Uncertainty band around the score. Required by invariant H27 (scores must carry uncertainty bands). Null when score is null.",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "number", "minimum": 0, "maximum": 100 },
+        "max": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "componentSignals": {
+      "type": "array",
+      "description": "Optional UI-safe component signals, pre-computed by the closed kernel for rendering component bars. Carries only a display level (0-6) and a short note — never protocol severity, weights, or formulas.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "level"],
+        "properties": {
+          "name": { "type": "string", "description": "Display name, e.g. 'Evidence support'." },
+          "level": { "type": "integer", "minimum": 0, "maximum": 6, "description": "Bar level 0-6 (6 = strongest). Already derived by the kernel." },
+          "note": { "type": "string", "description": "Short public description of this component's state." }
+        }
+      }
+    },
+    "summary": {
+      "type": "string",
+      "description": "Short, user-safe rationale (<= 16 words). Explains justification, not truth."
+    },
+    "issues": {
+      "type": "array",
+      "description": "Optional human-readable issue strings surfaced to end users.",
+      "items": { "type": "string" }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the verdict was produced."
+    },
+    "signature": {
+      "type": ["string", "null"],
+      "description": "Optional detached signature over the verdict payload, produced by the closed attestation service. Open packages VERIFY signatures; they never sign."
+    },
+    "signatureKeyId": {
+      "type": ["string", "null"],
+      "description": "Identifier of the public key used to verify the signature."
+    },
+    "signatureAlg": {
+      "type": ["string", "null"],
+      "description": "Signature algorithm (e.g. 'ed25519'). Present when signature is present."
+    }
+  }
+}
