@@ -42,8 +42,8 @@ A `Verdict` (see `schema/verdict.schema.json` and `docs/CONTRACT.md`): `score` (
 - **Hosted, closed (beta):** the scoring kernel — governance protocols, honesty scoring, and signed attestation — runs as a hosted service at `api.clearrun.net`. The SDK calls it; the scoring logic is not in this repo by design.
 
 ## Roadmap
-- Now: confidence-justification alignment scoring (this release).
-- Next: verified factual-accuracy layer, richer audit, and enterprise governance exports.
+- Now: confidence-justification alignment scoring (this release). Calibrated for English; scores on non-English output are outside today's validated scope.
+- Next: multilingual scoring (language-specific confidence and hedging cues), a verified factual-accuracy layer, richer audit, and enterprise governance exports.
 
 ## License
 MIT for everything in this repository. The hosted scoring kernel is licensed separately (BSL-1.1). See `LICENSE`.
