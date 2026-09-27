@@ -1,18 +1,32 @@
 {
   "name": "@clearrun/cli",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "ClearRun CLI – Score AI responses for reliability",
   "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "bin": {
     "clearrun": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "node ../../scripts/build_package.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prepack": "npm run build",
     "start": "node dist/index.js"
   },
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {},
   "devDependencies": {
     "typescript": "^5.3.0"
