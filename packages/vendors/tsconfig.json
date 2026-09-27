@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "lib": ["ES2022", "DOM"],
     "types": ["node"],
+    "composite": true,
     "declaration": true,
     "outDir": "dist",
     "strict": false,
@@ -12,5 +13,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src"],
+  "include": ["src"]
 }

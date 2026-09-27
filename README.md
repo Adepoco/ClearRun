@@ -6,7 +6,7 @@ Honesty scoring for AI responses. ClearRun evaluates any AI output and returns a
 
 ## Install
 
-Packages are **not on the npm registry yet.** Clone this repo and install the workspace (SDK, CLI, adapters, types):
+Packages are **not on the npm registry yet.** Clone this repo and install the workspace for now (SDK, CLI, adapters, types):
 
 ```bash
 git clone https://github.com/adepoco/clearrun.git
@@ -14,7 +14,16 @@ cd clearrun
 npm install
 ```
 
-Then import `@clearrun/sdk` from the workspace. After `npm publish` of `@clearrun/sdk`, the install line will be `npm install @clearrun/sdk`. Until then, **GitHub clone is the supported path.**
+Then import `@clearrun/sdk` from the workspace.
+
+When the packages are publish-ready, the intended install paths will be:
+
+```bash
+npm install @clearrun/core-types @clearrun/sdk @clearrun/scoring @clearrun/security @clearrun/vendors
+npm install -g @clearrun/cli
+```
+
+Those package names are reserved for the public OSS publish flow, but this README is **not** claiming they are live on npm today. Until the first publish lands, **GitHub clone is the supported path.**
 
 If this repository lives at a different URL, clone that URL instead — tag `v0.1.0-oss` is the release snapshot.
 
