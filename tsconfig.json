@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core-types" },
+    { "path": "./packages/sdk" },
+    { "path": "./packages/scoring" },
+    { "path": "./packages/security" },
+    { "path": "./packages/vendors" },
+    { "path": "./packages/cli" }
+  ]
+}

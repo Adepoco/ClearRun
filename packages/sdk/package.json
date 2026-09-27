@@ -1,21 +1,32 @@
 {
   "name": "@clearrun/sdk",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "ClearRun public SDK — HostedApiClient + MockKernelClient implementing the HonestyKernelClient boundary. Depends only on @clearrun/core-types; runs standalone against the mock with the closed kernel absent.",
   "license": "MIT",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node ../../scripts/build_package.js",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts",
+    "prepack": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": ["clearrun", "sdk", "honesty", "verdict", "client"],
   "dependencies": {
-    "@clearrun/core-types": "file:../core-types"
+    "@clearrun/core-types": "^0.1.0"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
