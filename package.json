@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "npm run build:packages",
-    "build:packages": "tsc -b",
+    "build:packages": "npm run build -w @clearrun/core-types && npm run build -w @clearrun/sdk && npm run build -w @clearrun/scoring && npm run build -w @clearrun/security && npm run build -w @clearrun/vendors && npm run build -w @clearrun/cli",
     "typecheck": "tsc -b --pretty false",
     "test:sdk": "npm run build -w @clearrun/core-types && npm run test -w @clearrun/sdk",
     "validate:schema": "node scripts/validate_schema.js",

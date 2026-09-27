@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "node ../../scripts/build_package.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "prepack": "npm run build",
     "test": "jest"

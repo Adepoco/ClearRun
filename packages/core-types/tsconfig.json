@@ -5,6 +5,7 @@
     "moduleResolution": "Node",
     "composite": true,
     "declaration": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "outDir": "dist",
     "rootDir": "./src",
     "strict": true,

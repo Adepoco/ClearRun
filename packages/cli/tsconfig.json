@@ -4,6 +4,7 @@
     "module": "commonjs",
     "lib": ["ES2020", "DOM"],
     "composite": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
