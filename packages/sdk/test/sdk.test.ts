@@ -116,6 +116,31 @@ test('HostedApiClient.verify GETs /api/verify/{id} without auth', async () => {
   assert.equal(calls[0].init.headers['Authorization'], undefined);
 });
 
+test('HostedApiClient.chat returns responseText when the API sends it', async () => {
+  const { fetch, calls } = stubFetch(() => ({ status: 200, body: { responseText: 'Paris.', verdict: sampleVerdict } }));
+  const client = new HostedApiClient({ apiKey: 'sk_test' }, { fetch });
+  const res = await client.chat({ message: 'Capital of France?' });
+  assert.equal(res.responseText, 'Paris.');
+  assert.equal(res.verdict.verdictId, 'v1');
+  assert.equal(calls[0].url, 'https://api.clearrun.net/api/chat');
+  assert.equal(JSON.parse(calls[0].init.body).message, 'Capital of France?');
+});
+
+test('HostedApiClient.chat maps the legacy response field to responseText', async () => {
+  // 0.1.0 bug: the live API returned { response, verdict } and chat() left responseText undefined.
+  const { fetch } = stubFetch(() => ({ status: 200, body: { response: 'Paris.', verdict: sampleVerdict } }));
+  const client = new HostedApiClient({ apiKey: 'sk_test' }, { fetch });
+  const res = await client.chat({ message: 'Capital of France?' });
+  assert.equal(res.responseText, 'Paris.');
+  assertValidVerdict(res.verdict);
+});
+
+test('HostedApiClient.chat prefers responseText when both fields are present', async () => {
+  const { fetch } = stubFetch(() => ({ status: 200, body: { responseText: 'new', response: 'old', verdict: sampleVerdict } }));
+  const client = new HostedApiClient({ apiKey: 'sk_test' }, { fetch });
+  assert.equal((await client.chat({ message: 'x' })).responseText, 'new');
+});
+
 test('HostedApiClient throws HostedApiError on non-2xx', async () => {
   const { fetch } = stubFetch(() => ({ status: 401, body: { error: 'bad key', code: 'unauthorized' } }));
   const client = new HostedApiClient({ apiKey: 'bad' }, { fetch });

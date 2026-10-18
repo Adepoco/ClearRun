@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Adepoco / CogniVault / ClearRun
 //
-// HostedApiClient — the production implementation of HonestyKernelClient. It
+// HostedApiClient: the production implementation of HonestyKernelClient. It
 // reaches the CLOSED kernel ONLY over the hosted API (docs/CONTRACT.md): base
 // URL + a scoped API key sent as `Authorization: Bearer <apiKey>`. It never
 // imports closed code or a sibling filesystem path.
@@ -113,8 +113,15 @@ export class HostedApiClient implements HonestyKernelClient {
     return this.request<EvaluateResponse>('POST', '/api/evaluate', req);
   }
 
-  chat(req: ChatRequest): Promise<ChatResponse> {
-    return this.request<ChatResponse>('POST', '/api/chat', req);
+  async chat(req: ChatRequest): Promise<ChatResponse> {
+    const data = await this.request<ChatResponse & { response?: unknown }>('POST', '/api/chat', req);
+    // The documented field is responseText (docs/CONTRACT.md). The hosted API
+    // returned the generated answer only as `response` until it was fixed, so
+    // accept either and always hand callers responseText.
+    if (typeof data.responseText !== 'string' && typeof data.response === 'string') {
+      return { ...data, responseText: data.response };
+    }
+    return data;
   }
 
   score(req: ScoreRequest): Promise<ScoreResponse> {

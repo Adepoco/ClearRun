@@ -28,5 +28,8 @@ jobs:
       - name: Run SDK tests
         run: npm run test:sdk
 
+      - name: Run CLI tests
+        run: npm run test:cli
+
       - name: Validate public verdict schema
         run: npm run validate:schema
