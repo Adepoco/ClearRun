@@ -1,7 +1,7 @@
 {
   "name": "@clearrun/sdk",
   "version": "0.1.0",
-  "description": "ClearRun public SDK — HostedApiClient + MockKernelClient implementing the HonestyKernelClient boundary. Depends only on @clearrun/core-types; runs standalone against the mock with the closed kernel absent.",
+  "description": "ClearRun public SDK. HostedApiClient + MockKernelClient implementing the HonestyKernelClient boundary. Depends only on @clearrun/core-types; runs standalone against the mock with the closed kernel absent.",
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

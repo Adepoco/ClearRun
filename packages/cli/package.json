@@ -1,7 +1,7 @@
 {
   "name": "@clearrun/cli",
   "version": "0.1.0",
-  "description": "ClearRun CLI – Score AI responses for reliability",
+  "description": "ClearRun CLI. Score AI responses for reliability.",
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

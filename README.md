@@ -1,12 +1,19 @@
 # ClearRun
 
-Honesty scoring for AI responses. ClearRun evaluates any AI output and returns a plain-language **honesty verdict** — a score, a reliability state, a failure breakdown, and a signed, verifiable record — through a small open SDK, model adapters, and a CLI.
+Honesty scoring for AI responses. ClearRun evaluates any AI output and returns a plain-language **honesty verdict** through a small open SDK, model adapters, and a CLI. A verdict includes a score, a reliability state, a failure breakdown, and a signed, verifiable record.
 
-> **What ClearRun measures:** confidence-justification **alignment** — whether an AI's expressed confidence is backed by its reasoning. **It does not fact-check.** A high score means the response's confidence matches its justification, *not* that it is factually true. Verified factual accuracy is on the roadmap.
+> **What ClearRun measures:** confidence-justification **alignment**, whether an AI's expressed confidence is backed by its reasoning. **It does not fact-check.** A high score means the response's confidence matches its justification, *not* that it is factually true. Verified factual accuracy is on the roadmap.
 
 ## Install
 
-Packages are **not on the npm registry yet.** Clone this repo and install the workspace for now (SDK, CLI, adapters, types):
+All six `@clearrun` packages are on the npm registry at version **0.1.0**.
+
+```bash
+npm install @clearrun/core-types @clearrun/sdk @clearrun/scoring @clearrun/security @clearrun/vendors
+npm install -g @clearrun/cli
+```
+
+To work from a clone of this repository instead:
 
 ```bash
 git clone https://github.com/adepoco/clearrun.git
@@ -16,16 +23,7 @@ npm install
 
 Then import `@clearrun/sdk` from the workspace.
 
-When the packages are publish-ready, the intended install paths will be:
-
-```bash
-npm install @clearrun/core-types @clearrun/sdk @clearrun/scoring @clearrun/security @clearrun/vendors
-npm install -g @clearrun/cli
-```
-
-Those package names are reserved for the public OSS publish flow, but this README is **not** claiming they are live on npm today. Until the first publish lands, **GitHub clone is the supported path.**
-
-If this repository lives at a different URL, clone that URL instead — tag `v0.1.0-oss` is the release snapshot.
+If this repository lives at a different URL, clone that URL instead. Tag `v0.1.0-oss` is the release snapshot.
 
 ## Quickstart
 ```ts
@@ -41,14 +39,14 @@ const { verdict } = await client.evaluate({
 
 console.log(verdict.score, verdict.grade, verdict.failureCategories);
 ```
-No API key configured? Pass `{ forceMock: true }` for local development — the mock returns schema-valid verdicts, never real scores.
+No API key configured? Pass `{ forceMock: true }` for local development. The mock returns schema-valid verdicts, never real scores.
 
 ## What you get back
-A `Verdict` (see `schema/verdict.schema.json` and `docs/CONTRACT.md`): `score` (0–100), `grade`, `risk`, `failureCategories[]`, `confidenceInterval`, `componentSignals[]`, plain-language `summary`, and an Ed25519 `signature` you can verify — locally or via `GET https://api.clearrun.net/api/verify/{verdictId}`.
+A `Verdict` (see `schema/verdict.schema.json` and `docs/CONTRACT.md`): `score` (0-100), `grade`, `risk`, `failureCategories[]`, `confidenceInterval`, `componentSignals[]`, plain-language `summary`, and an Ed25519 `signature` you can verify locally, or via `GET https://api.clearrun.net/api/verify/{verdictId}`.
 
 ## Open core
 - **MIT (this repo):** the SDK, model adapters (OpenAI, Anthropic, Google), CLI, verdict types, and schema. Clone it, embed it, build on it.
-- **Hosted, closed (beta):** the scoring kernel — governance protocols, honesty scoring, and signed attestation — runs as a hosted service at `api.clearrun.net`. The SDK calls it; the scoring logic is not in this repo by design.
+- **Hosted, closed (beta):** the scoring kernel runs as a hosted service at `api.clearrun.net`. It provides governance protocols, honesty scoring, and signed attestation. The SDK calls it; the scoring logic is not in this repo by design.
 
 ## Roadmap
 - Now: confidence-justification alignment scoring (this release). Calibrated for English; scores on non-English output are outside today's validated scope.
