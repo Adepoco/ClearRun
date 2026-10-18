@@ -1,7 +1,7 @@
 {
   "name": "@clearrun/core-types",
   "version": "0.1.0",
-  "description": "ClearRun shared verdict contract — TypeScript mirror of schema/verdict.schema.json. The only type surface shared between the open integration packages and the closed kernel.",
+  "description": "ClearRun shared verdict contract. TypeScript mirror of schema/verdict.schema.json. The only type surface shared between the open integration packages and the closed kernel.",
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

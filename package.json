@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "description": "ClearRun open-core — honesty verdict contract, SDK, CLI, vendors, security, scoring UI mapping.",
+  "description": "ClearRun open-core. Honesty verdict contract, SDK, CLI, vendors, security, and scoring UI mapping.",
   "workspaces": [
     "packages/core-types",
     "packages/cli",

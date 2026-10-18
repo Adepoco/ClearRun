@@ -1,7 +1,7 @@
 {
   "name": "@clearrun/vendors",
   "version": "0.1.0",
-  "description": "ClearRun vendor integration surface (OPEN) — model registry, adapters, providers, routing. Folds the former engine/{adapters,providers,registry}. Self-contained; no scoring/governance.",
+  "description": "ClearRun vendor integration surface (OPEN). Model registry, adapters, providers, and routing. Folds the former engine/{adapters,providers,registry}. Self-contained; no scoring/governance.",
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
