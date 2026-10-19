@@ -1,12 +1,12 @@
 # ClearRun
 
-Honesty scoring for AI responses. ClearRun evaluates any AI output and returns a plain-language **honesty verdict** through a small open SDK, model adapters, and a CLI. A verdict includes a score, a reliability state, a failure breakdown, and a signed, verifiable record.
+Honesty scoring for AI responses. ClearRun evaluates any AI output and returns a plain-language **honesty verdict** through a small open SDK, model adapters, and a CLI. A verdict includes a score, a grade, a failure breakdown, and a signed, verifiable record.
 
 > **What ClearRun measures:** confidence-justification **alignment**, whether an AI's expressed confidence is backed by its reasoning. **It does not fact-check.** A high score means the response's confidence matches its justification, *not* that it is factually true. Verified factual accuracy is on the roadmap.
 
 ## Install
 
-All six `@clearrun` packages are on the npm registry at version **0.1.0**.
+All six `@clearrun` packages are on the npm registry. `@clearrun/sdk` and `@clearrun/cli` are at **0.1.1**; `@clearrun/core-types`, `@clearrun/scoring`, `@clearrun/security` and `@clearrun/vendors` are at **0.1.0**. See `CHANGELOG.md` for what changed in 0.1.1.
 
 ```bash
 npm install @clearrun/core-types @clearrun/sdk @clearrun/scoring @clearrun/security @clearrun/vendors

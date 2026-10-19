@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 (unreleased)
+## 0.1.1 (2026-10-18)
 
 Packages: `@clearrun/cli` 0.1.1 and `@clearrun/sdk` 0.1.1. The other four packages stay at 0.1.0.
 
