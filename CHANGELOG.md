@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### @clearrun/mcp 0.1.1
+- New stdio MCP server. It calls the hosted API through `@clearrun/sdk` and does not score locally.
+- Package version 0.1.1. Depends on `@clearrun/sdk` ^0.1.1 and `@clearrun/core-types` ^0.1.0.
+- Does not change `@clearrun/sdk` (0.1.1), `@clearrun/cli` (0.1.1), or `@clearrun/core-types` (0.1.0).
+
 ## 0.1.1 (2026-10-18)
 
 Packages: `@clearrun/cli` 0.1.1 and `@clearrun/sdk` 0.1.1. The other four packages stay at 0.1.0.

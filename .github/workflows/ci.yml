@@ -31,5 +31,8 @@ jobs:
       - name: Run CLI tests
         run: npm run test:cli
 
+      - name: Run MCP tests
+        run: npm run test:mcp
+
       - name: Validate public verdict schema
         run: npm run validate:schema

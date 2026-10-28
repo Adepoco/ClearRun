@@ -6,6 +6,7 @@
     { "path": "./packages/scoring" },
     { "path": "./packages/security" },
     { "path": "./packages/vendors" },
-    { "path": "./packages/cli" }
+    { "path": "./packages/cli" },
+    { "path": "./packages/mcp" }
   ]
 }
