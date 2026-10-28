@@ -1,0 +1,33 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.adepoco/clearrun-mcp",
+  "title": "ClearRun",
+  "description": "Scores AI answers for honesty calibration. Not a fact-checker.",
+  "websiteUrl": "https://clearrun.net",
+  "repository": {
+    "url": "https://github.com/Adepoco/ClearRun",
+    "source": "github",
+    "id": "1372519765",
+    "subfolder": "packages/mcp"
+  },
+  "version": "0.1.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@clearrun/mcp",
+      "version": "0.1.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CLEARRUN_API_KEY",
+          "description": "ClearRun API key. Pro plan or higher. Free plan keys are rejected. Create one at https://api.clearrun.net/account/keys.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

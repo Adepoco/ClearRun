@@ -6,6 +6,8 @@ Hosted API: [`https://api.clearrun.net`](https://api.clearrun.net)
 
 | Doc | What it is |
 |-----|------------|
+| [developers.md](./developers.md) | SDK, CLI, and MCP on one page (adoption guide) |
+| [LISTINGS.md](./LISTINGS.md) | Checklist for the MCP registry and public directories |
 | [CONTRACT.md](./CONTRACT.md) | Locked `Verdict` shape + hosted API (`evaluate` / `chat` / `score` / `verify`) |
 | [HONESTY_DEFINITION.md](./HONESTY_DEFINITION.md) | What “honesty” means (confidence-justification alignment, **not** fact-checking) |
 | [MODEL_ADAPTERS.md](./MODEL_ADAPTERS.md) | Vendor-neutral adapters (OpenAI, Anthropic, Google). Transport only. |
