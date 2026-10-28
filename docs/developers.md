@@ -16,7 +16,7 @@ Pick one client:
 | --- | --- | --- |
 | An app, script, or service | [`@clearrun/sdk`](https://www.npmjs.com/package/@clearrun/sdk) | 0.1.1 |
 | A terminal or CI check | [`@clearrun/cli`](https://www.npmjs.com/package/@clearrun/cli) | 0.1.1 |
-| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 0.1.1 |
+| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 0.1.2 |
 
 Shared types are [`@clearrun/core-types`](https://www.npmjs.com/package/@clearrun/core-types) 0.1.0. Node.js 18 or newer.
 
@@ -118,7 +118,7 @@ Package page: [packages/cli/README.md](../packages/cli/README.md).
 
 ## MCP
 
-`@clearrun/mcp` 0.1.1 is a stdio server. It calls the hosted API through the SDK. If `CLEARRUN_API_KEY` is missing, every tool returns an error and does not call the API. The key is not written into tool results.
+`@clearrun/mcp` 0.1.2 is a stdio server. It calls the hosted API through the SDK. If `CLEARRUN_API_KEY` is missing, every tool returns an error and does not call the API. The key is not written into tool results.
 
 Install by letting the host run:
 

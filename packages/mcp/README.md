@@ -1,6 +1,6 @@
 # @clearrun/mcp
 
-Stdio [MCP](https://modelcontextprotocol.io) server for [ClearRun](https://clearrun.net). Version 0.1.1.
+Stdio [MCP](https://modelcontextprotocol.io) server for [ClearRun](https://clearrun.net). Version 0.1.2.
 
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
@@ -30,7 +30,7 @@ Or install it in a project:
 npm install @clearrun/mcp
 ```
 
-`@clearrun/mcp` 0.1.1 depends on `@clearrun/sdk` ^0.1.1 and `@clearrun/core-types` ^0.1.0.
+`@clearrun/mcp` 0.1.2 depends on `@clearrun/sdk` ^0.1.1 and `@clearrun/core-types` ^0.1.0.
 
 From a clone of [https://github.com/Adepoco/ClearRun](https://github.com/Adepoco/ClearRun):
 
@@ -169,7 +169,7 @@ That public request does not use an API key. The MCP tool `clearrun_verify` stil
 
 ## Registry name
 
-`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 0.1.1, stdio, `CLEARRUN_API_KEY` as a required secret). Publishing that manifest is a separate step from this repository. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
+`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 0.1.2, stdio, `CLEARRUN_API_KEY` as a required secret). Publishing that manifest is a separate step from this repository. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
 
 ## Links
 

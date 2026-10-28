@@ -14,25 +14,23 @@ Scores AI answers for honesty (whether confidence is backed by its reasoning). N
 
 Do this before PulseMCP. The manifest is [packages/mcp/server.json](../packages/mcp/server.json). `mcpName` in [packages/mcp/package.json](../packages/mcp/package.json) is `io.github.adepoco/clearrun-mcp`. That name matches `server.json`. Schema: `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`. Docs: [registry quickstart](https://modelcontextprotocol.io/registry/quickstart).
 
-`mcpName` is read from the **published** npm package. Version 0.1.1 on npm does not contain it. Do not run `mcp-publisher publish` against 0.1.1. Publish 0.1.2 (or the next version) to npm first, with `mcpName` still in `package.json`, and set both version fields in `server.json` to that same version.
+`mcpName` is read from the **published** npm package. npm `@clearrun/mcp@0.1.1` does not contain it. This repo is 0.1.2 in `package.json` and in both `server.json` version fields. Publish 0.1.2 to npm before `mcp-publisher publish`. Do not publish the registry manifest against 0.1.1.
 
 Ross runs these steps. This repository does not publish.
 
 ```bash
-# From a checkout that contains mcpName and server.json.
-# 1. Bump packages/mcp/package.json "version" to 0.1.2.
-#    Set server.json "version" and packages[0].version to 0.1.2.
-#    Leave "name" / mcpName as io.github.adepoco/clearrun-mcp.
-# 2. Publish to npm (npm account with access to @clearrun). Do not use a CI token in the shell history you share.
+# From a checkout of this 0.1.2 branch. package.json and both server.json
+# version fields are already 0.1.2. mcpName stays io.github.adepoco/clearrun-mcp.
+# Publish to npm (npm account with access to @clearrun). Do not use a CI token in the shell history you share.
 npm publish -w @clearrun/mcp --access public
 
-# 3. Confirm the registry metadata, not the repo file:
+# Confirm the registry metadata, not the repo file:
 curl -s https://registry.npmjs.org/@clearrun/mcp/0.1.2 | jq -r .mcpName
 # Expected output: io.github.adepoco/clearrun-mcp
 
-# 4. Install mcp-publisher:
-#    https://modelcontextprotocol.io/registry/quickstart
-# 5. Log in from packages/mcp.
+# Install mcp-publisher:
+# https://modelcontextprotocol.io/registry/quickstart
+# Log in from packages/mcp.
 cd packages/mcp
 mcp-publisher login github
 mcp-publisher publish

@@ -16,7 +16,7 @@ Three ways to call it:
 | --- | --- | --- |
 | [`@clearrun/sdk`](packages/sdk/README.md) | 0.1.1 | Your own app or service should call the API. |
 | [`@clearrun/cli`](packages/cli/README.md) | 0.1.1 | You want a terminal command or a CI check. |
-| [`@clearrun/mcp`](packages/mcp/README.md) | 0.1.1 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
+| [`@clearrun/mcp`](packages/mcp/README.md) | 0.1.2 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
 
 `@clearrun/core-types` is 0.1.0. The SDK depends on it. One page for all three clients: [docs/developers.md](docs/developers.md).
 
