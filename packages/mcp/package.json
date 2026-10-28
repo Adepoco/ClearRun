@@ -1,0 +1,50 @@
+{
+  "name": "@clearrun/mcp",
+  "version": "0.1.1",
+  "description": "ClearRun MCP server. Scores AI answers for honesty (confidence-justification alignment) through the hosted API. Not a fact-checker.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "clearrun-mcp": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "node ../../scripts/build_package.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "tsx --test test/*.test.ts",
+    "prepack": "npm run build",
+    "start": "node dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "clearrun",
+    "mcp",
+    "honesty",
+    "calibration"
+  ],
+  "dependencies": {
+    "@clearrun/core-types": "^0.1.0",
+    "@clearrun/sdk": "^0.1.1",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
