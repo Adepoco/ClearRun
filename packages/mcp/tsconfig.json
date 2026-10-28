@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "composite": true,
+    "declaration": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
+    "outDir": "dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../core-types" },
+    { "path": "../sdk" }
+  ]
+}

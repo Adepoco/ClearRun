@@ -9,3 +9,5 @@ Hosted API: [`https://api.clearrun.net`](https://api.clearrun.net)
 | [CONTRACT.md](./CONTRACT.md) | Locked `Verdict` shape + hosted API (`evaluate` / `chat` / `score` / `verify`) |
 | [HONESTY_DEFINITION.md](./HONESTY_DEFINITION.md) | What “honesty” means (confidence-justification alignment, **not** fact-checking) |
 | [MODEL_ADAPTERS.md](./MODEL_ADAPTERS.md) | Vendor-neutral adapters (OpenAI, Anthropic, Google). Transport only. |
+
+The MCP server is [`packages/mcp`](../packages/mcp/README.md) (`@clearrun/mcp`). It calls the hosted API. ClearRun scores honesty, not facts.

@@ -75,7 +75,7 @@ function scanFile(file) {
   }
 }
 
-for (const pkg of ['cli', 'vendors', 'security', 'core', 'core-types', 'scoring', 'sdk']) {
+for (const pkg of ['cli', 'vendors', 'security', 'core', 'core-types', 'scoring', 'sdk', 'mcp']) {
   walk(path.join(ROOT, 'packages', pkg, 'src'), scanFile);
 }
 
