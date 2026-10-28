@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Docs
+- Adoption pages for `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp`: package READMEs, the root README, `docs/developers.md`, and `docs/LISTINGS.md`.
+- `@clearrun/mcp` `package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `packages/mcp/server.json` is the Official MCP Registry manifest. Package version stays 0.1.1. A later npm publish has to carry `mcpName` before `mcp-publisher publish`.
+
 ### @clearrun/mcp 0.1.1
 - New stdio MCP server. It calls the hosted API through `@clearrun/sdk` and does not score locally.
 - Package version 0.1.1. Depends on `@clearrun/sdk` ^0.1.1 and `@clearrun/core-types` ^0.1.0.
