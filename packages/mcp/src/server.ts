@@ -11,7 +11,7 @@ import { createKernelClient, HostedApiError, type FetchLike, type HonestyKernelC
 import { MISSING_KEY_MESSAGE, presentApiResult, redactSecret } from './present.js';
 
 export const SERVER_NAME = 'clearrun';
-export const SERVER_VERSION = '0.1.1';
+export const SERVER_VERSION = '0.1.2';
 
 export const HONESTY_NOTE =
   'ClearRun scores honesty, meaning whether an answer\'s confidence is backed by its reasoning. It is not a fact-checker. A high score does not mean the answer is true.';

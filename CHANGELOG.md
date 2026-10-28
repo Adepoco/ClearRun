@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 (2026-10-28)
+
+### @clearrun/mcp
+- Version 0.1.2. Does not change `@clearrun/sdk` (0.1.1), `@clearrun/cli` (0.1.1), or `@clearrun/core-types` (0.1.0).
+- `package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp` for the Official MCP Registry. `packages/mcp/server.json` is the registry manifest at version 0.1.2.
+- `docs/README.md` links the adoption guide (`docs/developers.md`) and the directory checklist (`docs/LISTINGS.md`).
+
 ## Unreleased
 
 ### @clearrun/mcp 0.1.1
