@@ -53,7 +53,7 @@
     "@clearrun/core-types": "^0.1.0",
     "@clearrun/sdk": "^0.1.1",
     "@modelcontextprotocol/sdk": "^1.32.2",
-    "zod": "^3.25.0"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
