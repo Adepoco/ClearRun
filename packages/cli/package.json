@@ -1,7 +1,7 @@
 {
   "name": "@clearrun/cli",
   "version": "0.2.0",
-  "description": "ClearRun CLI. Score AI answers for honesty (confidence vs reasoning) through the hosted API. Not a fact-checker.",
+  "description": "Scores AI answers for honesty (confidence-justification alignment). Not a fact-checker.",
   "license": "MIT",
   "author": "Adepoco <contact@adepoco.com>",
   "homepage": "https://clearrun.net",
