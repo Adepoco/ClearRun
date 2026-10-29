@@ -1,5 +1,20 @@
 # ClearRun
 
+## Get an API key
+
+Hosted scoring needs a ClearRun account and an API key. Keys are a Pro plan or higher feature. A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+
+1. Open [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). Sign in on that page if you need an account. That page is where you create a key.
+2. Save the key on your machine:
+
+```bash
+npx @clearrun/cli login
+```
+
+Or set the `CLEARRUN_API_KEY` environment variable. Do not commit a real key.
+
+`CLEARRUN_API_KEY` is checked first. When it is unset, the SDK, CLI, and MCP server read `~/.config/clearrun/config.json`, which is the file `clearrun login` writes. `XDG_CONFIG_HOME/clearrun/config.json` is used when `XDG_CONFIG_HOME` is set.
+
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
 You get a 0 to 100 score, a grade, named failure categories, a short summary, and a signed verdict you can look up again. The open packages in this repo are the client. The scoring engine runs as a hosted service at `https://api.clearrun.net`. It is not in this repository, and these docs do not describe its formula.
@@ -14,17 +29,17 @@ Three ways to call it:
 
 | Package | Version | Use it when |
 | --- | --- | --- |
-| [`@clearrun/sdk`](packages/sdk/README.md) | 0.1.1 | Your own app or service should call the API. |
-| [`@clearrun/cli`](packages/cli/README.md) | 0.1.1 | You want a terminal command or a CI check. |
-| [`@clearrun/mcp`](packages/mcp/README.md) | 0.1.2 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
+| [`@clearrun/sdk`](packages/sdk/README.md) | 0.2.0 | Your own app or service should call the API. |
+| [`@clearrun/cli`](packages/cli/README.md) | 0.2.0 | You want a terminal command or a CI check. |
+| [`@clearrun/mcp`](packages/mcp/README.md) | 0.2.0 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
 
 `@clearrun/core-types` is 0.1.0. The SDK depends on it. One page for all three clients: [docs/developers.md](docs/developers.md).
 
 ## Access
 
-An API key is required for hosted scoring. Keys are a Pro plan or higher feature. Create one while signed in at [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+The steps are in **Get an API key** above. `createKernelClient()` throws `MissingApiKeyError` when no key is configured. The error names the keys page, `npx @clearrun/cli login`, and `CLEARRUN_API_KEY`.
 
-Set the environment variable `CLEARRUN_API_KEY`. Do not commit a real key.
+For local development only, pass `{ forceMock: true }` to the SDK. The mock returns schema-valid verdicts and is not a hosted score. The CLI and the MCP server do not offer that mock.
 
 ## Install
 
@@ -66,9 +81,11 @@ console.log(verdict.score, verdict.grade, verdict.failureCategories);
 CLI:
 
 ```bash
-export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY
+npx @clearrun/cli login
 clearrun verify --text "The Eiffel Tower is in Berlin."
 ```
+
+`export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY` works too, and it overrides the saved key.
 
 No API key for local development? Pass `{ forceMock: true }` to the SDK. The mock returns schema-valid verdicts, never real scores. The MCP server never uses the mock.
 

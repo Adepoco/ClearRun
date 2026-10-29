@@ -10,19 +10,19 @@
     "id": "1372519765",
     "subfolder": "packages/mcp"
   },
-  "version": "0.1.2",
+  "version": "0.2.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@clearrun/mcp",
-      "version": "0.1.2",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "CLEARRUN_API_KEY",
-          "description": "ClearRun API key. Pro plan or higher. Free plan keys are rejected. Create one at https://api.clearrun.net/account/keys.",
+          "description": "ClearRun API key. Pro plan or higher. Free plan keys are rejected. Create one at https://api.clearrun.net/account/keys or run npx @clearrun/cli login.",
           "isRequired": true,
           "isSecret": true,
           "format": "string"

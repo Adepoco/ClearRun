@@ -1,6 +1,21 @@
 # @clearrun/sdk
 
-TypeScript client for [ClearRun](https://clearrun.net). Version 0.1.1. It depends only on `@clearrun/core-types` 0.1.0.
+## Get an API key
+
+Hosted scoring needs a ClearRun account and an API key. Keys are a Pro plan or higher feature. A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+
+1. Open [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). Sign in on that page if you need an account. That page is where you create a key.
+2. Save the key:
+
+```bash
+npx @clearrun/cli login
+```
+
+Or set `CLEARRUN_API_KEY`. Do not commit a real key.
+
+`createKernelClient()` checks an explicit `hosted.apiKey`, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. When no key is found it throws `MissingApiKeyError`. The message includes the keys page, `npx @clearrun/cli login`, and `CLEARRUN_API_KEY`.
+
+TypeScript client for [ClearRun](https://clearrun.net). Version 0.2.0. It depends only on `@clearrun/core-types` 0.1.0.
 
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
@@ -12,11 +27,9 @@ Call ClearRun from your own app, test suite, or service. `score` and `evaluate` 
 
 ## Access
 
-An API key is required for hosted scoring. Keys are a Pro plan or higher feature. Create one while signed in at [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+See **Get an API key** above. `createKernelClient()` throws `MissingApiKeyError` when no key is configured. It does not silently return a mock score.
 
-Set `CLEARRUN_API_KEY`, or pass `hosted.apiKey`. If neither is set, `createKernelClient()` throws. It does not silently return a mock score.
-
-For local development only, pass `{ forceMock: true }` (or a `mock` options object). The mock returns schema-valid verdicts, never real scores.
+For local development only, pass `{ forceMock: true }` (or a `mock` options object). The mock returns schema-valid verdicts for local development.
 
 ## Install
 

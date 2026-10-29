@@ -9,6 +9,11 @@
 // (`forceMock` / `mock`). Neither imports closed code.
 
 import type { HonestyKernelClient, HostedApiConfig } from '@clearrun/core-types';
+import {
+  MissingApiKeyError,
+  resolveClearRunApiKey,
+  type ResolveApiKeyOptions,
+} from './credentials';
 import { HostedApiClient, type HostedClientDeps } from './hosted-client';
 import { MockKernelClient, type MockClientOptions } from './mock-client';
 
@@ -16,6 +21,27 @@ export { HostedApiClient, HostedApiError } from './hosted-client';
 export type { FetchLike, HostedClientDeps } from './hosted-client';
 export { MockKernelClient } from './mock-client';
 export type { MockClientOptions } from './mock-client';
+export {
+  API_KEYS_URL,
+  API_KEY_VERIFY_PATH,
+  MISSING_API_KEY_MESSAGE,
+  MissingApiKeyError,
+  CredentialFileError,
+  checkApiKey,
+  maskApiKey,
+  readCredentialFile,
+  resolveClearRunApiKey,
+  userConfigPath,
+  writeCredentialFile,
+} from './credentials';
+export type {
+  ApiKeySource,
+  CredentialFile,
+  CredentialUpdates,
+  KeyCheckResult,
+  ResolveApiKeyOptions,
+  ResolvedApiKey,
+} from './credentials';
 
 // Re-export the boundary types so consumers can import everything from the SDK.
 export type {
@@ -46,16 +72,19 @@ export interface CreateKernelClientOptions {
   mock?: MockClientOptions;
   /** Dependency injection for the hosted client (e.g. a custom fetch). */
   deps?: HostedClientDeps;
+  /**
+   * Environment used for CLEARRUN_API_KEY and the user config path.
+   * Defaults to process.env.
+   */
+  env?: ResolveApiKeyOptions['env'];
 }
-
-const MISSING_KEY =
-  'No CLEARRUN_API_KEY configured; pass { forceMock: true } for local development';
 
 /**
  * Factory: returns a HonestyKernelClient.
- * Requires a hosted API key (`hosted.apiKey` or `CLEARRUN_API_KEY`) unless the
- * caller explicitly opts into MockKernelClient via `forceMock` or `mock`.
- * Never silently returns a mock score.
+ * Requires a hosted API key (`hosted.apiKey`, `CLEARRUN_API_KEY`, or the
+ * CLI config file) unless the caller explicitly opts into MockKernelClient
+ * via `forceMock` or `mock`. Never silently returns a mock score.
+ * A missing key throws MissingApiKeyError.
  */
 export function createKernelClient(options: CreateKernelClientOptions = {}): HonestyKernelClient {
   const { hosted, forceMock, mock, deps } = options;
@@ -63,12 +92,15 @@ export function createKernelClient(options: CreateKernelClientOptions = {}): Hon
   if (mockOptIn) {
     return new MockKernelClient(mock);
   }
-  const apiKey = (hosted?.apiKey ?? process.env.CLEARRUN_API_KEY ?? '').trim();
-  if (!apiKey) {
-    throw new Error(MISSING_KEY);
+  const resolved = resolveClearRunApiKey({
+    apiKey: hosted?.apiKey,
+    env: options.env ?? process.env,
+  });
+  if (!resolved) {
+    throw new MissingApiKeyError();
   }
   return new HostedApiClient(
-    { baseUrl: hosted?.baseUrl, apiKey, timeoutMs: hosted?.timeoutMs },
+    { baseUrl: hosted?.baseUrl, apiKey: resolved.apiKey, timeoutMs: hosted?.timeoutMs },
     deps
   );
 }

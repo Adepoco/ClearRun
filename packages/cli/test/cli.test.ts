@@ -23,13 +23,18 @@ function verdict(score: number, issues: string[] = []): PublicVerdict {
   };
 }
 
-function harness(scoreFor: (text: string) => PublicVerdict | Error = () => verdict(82), cwd?: string, env: Record<string, string | undefined> = {}) {
+function harness(scoreFor: (text: string) => PublicVerdict | Error = () => verdict(82), cwd?: string, env?: Record<string, string | undefined>) {
   const stdout: string[] = [];
   const stderr: string[] = [];
   const calls: Array<{ text: string; options?: VerifyOptions }> = [];
+  const dir = cwd ?? mkdtempSync(join(tmpdir(), 'clearrun-cli-'));
+  const home = mkdtempSync(join(tmpdir(), 'clearrun-home-'));
+  // Omitted env gets a key so existing score tests still reach the stub.
+  // Pass env explicitly (even {}) to exercise the missing-key path.
+  const provided = env === undefined ? { CLEARRUN_API_KEY: 'cr_test_key_not_a_secret' } : env;
   const deps = {
-    cwd: cwd ?? mkdtempSync(join(tmpdir(), 'clearrun-cli-')),
-    env,
+    cwd: dir,
+    env: { HOME: home, ...provided },
     stdout: (l: string) => stdout.push(l),
     stderr: (l: string) => stderr.push(l),
     verify: async (text: string, options?: VerifyOptions) => {

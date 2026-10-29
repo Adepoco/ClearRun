@@ -10,6 +10,7 @@ import {
   MockKernelClient,
   HostedApiClient,
   HostedApiError,
+  MissingApiKeyError,
   type FetchLike,
   type Verdict,
   type HonestyKernelClient,
@@ -154,18 +155,20 @@ test('HostedApiClient throws HostedApiError on non-2xx', async () => {
 
 // ── Factory routing ──────────────────────────────────────────────────────────
 
-test('createKernelClient throws without api key and without mock opt-in', () => {
-  const prev = process.env.CLEARRUN_API_KEY;
-  delete process.env.CLEARRUN_API_KEY;
-  try {
-    assert.throws(
-      () => createKernelClient(),
-      /No CLEARRUN_API_KEY configured; pass \{ forceMock: true \} for local development/
-    );
-  } finally {
-    if (prev !== undefined) process.env.CLEARRUN_API_KEY = prev;
-    else delete process.env.CLEARRUN_API_KEY;
-  }
+test('createKernelClient throws MissingApiKeyError without a key and without mock opt-in', () => {
+  assert.throws(
+    () => createKernelClient({ env: { HOME: `/tmp/clearrun-sdk-missing-${process.pid}-${Date.now()}` } }),
+    (err: unknown) => {
+      assert.ok(err instanceof MissingApiKeyError);
+      assert.equal((err as MissingApiKeyError).name, 'MissingApiKeyError');
+      assert.equal((err as MissingApiKeyError).signupUrl, 'https://api.clearrun.net/account/keys');
+      assert.match((err as Error).message, /https:\/\/api\.clearrun\.net\/account\/keys/);
+      assert.match((err as Error).message, /npx @clearrun\/cli login/);
+      assert.match((err as Error).message, /CLEARRUN_API_KEY/);
+      assert.doesNotMatch((err as Error).message, /cr_test_key_not_a_secret/);
+      return true;
+    }
+  );
 });
 
 test('createKernelClient returns Hosted with apiKey', () => {

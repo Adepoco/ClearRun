@@ -1,6 +1,6 @@
 {
   "name": "@clearrun/mcp",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "mcpName": "io.github.adepoco/clearrun-mcp",
   "description": "ClearRun MCP server. Scores AI answers for honesty (confidence-justification alignment) through the hosted API. Not a fact-checker.",
   "license": "MIT",
@@ -51,7 +51,7 @@
   ],
   "dependencies": {
     "@clearrun/core-types": "^0.1.0",
-    "@clearrun/sdk": "^0.1.1",
+    "@clearrun/sdk": "^0.2.0",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^3.25.0"
   },
