@@ -1,6 +1,6 @@
 {
   "name": "@clearrun/cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "ClearRun CLI. Score AI answers for honesty (confidence vs reasoning) through the hosted API. Not a fact-checker.",
   "license": "MIT",
   "author": "Adepoco <contact@adepoco.com>",
@@ -44,7 +44,9 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@clearrun/sdk": "^0.2.0"
+  },
   "devDependencies": {
     "typescript": "^5.3.0"
   }

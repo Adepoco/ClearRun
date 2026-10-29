@@ -14,29 +14,28 @@ Pick one client:
 
 | You are building | Package | Published |
 | --- | --- | --- |
-| An app, script, or service | [`@clearrun/sdk`](https://www.npmjs.com/package/@clearrun/sdk) | 0.1.1 |
-| A terminal or CI check | [`@clearrun/cli`](https://www.npmjs.com/package/@clearrun/cli) | 0.1.1 |
-| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 0.1.2 |
+| An app, script, or service | [`@clearrun/sdk`](https://www.npmjs.com/package/@clearrun/sdk) | 0.2.0 |
+| A terminal or CI check | [`@clearrun/cli`](https://www.npmjs.com/package/@clearrun/cli) | 0.2.0 |
+| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 0.2.0 |
 
 Shared types are [`@clearrun/core-types`](https://www.npmjs.com/package/@clearrun/core-types) 0.1.0. Node.js 18 or newer.
 
-## Access
+## Get an API key
 
-An API key is required for hosted scoring. Keys are a Pro plan or higher feature. Create one while signed in:
+Hosted scoring needs a ClearRun account and an API key. Keys are a Pro plan or higher feature. A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
 
-[https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys)
-
-A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
-
-Set this environment variable everywhere:
+1. Open [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). Sign in on that page if you need an account. That page is where you create a key.
+2. Save the key:
 
 ```bash
-export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY
+npx @clearrun/cli login
 ```
 
-Do not commit a real key. The SDK also accepts `hosted.apiKey`. The CLI also accepts `--api-key`. The MCP server reads `CLEARRUN_API_KEY` from the host config.
+Or set `CLEARRUN_API_KEY`. Do not commit a real key.
 
-Without a key, `createKernelClient()` throws. Pass `{ forceMock: true }` only for local development. The mock returns schema-valid verdicts, never real scores. The CLI and the MCP server do not offer that mock.
+Lookup order for the SDK and the MCP server: an explicit key, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. The CLI checks `--api-key` first, then that same order, then `apiKey` in `./clearrun.config.json`.
+
+Without a key, `createKernelClient()` throws `MissingApiKeyError`. The MCP tools return that same message, and the server logs it to stderr at startup. Pass `{ forceMock: true }` only for local SDK development. The mock returns schema-valid verdicts for local development. The CLI and the MCP server do not offer that mock.
 
 ## Credits
 
@@ -96,13 +95,18 @@ Package page: [packages/sdk/README.md](../packages/sdk/README.md).
 
 ```bash
 npm install -g @clearrun/cli
-export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY
+npx @clearrun/cli login
 clearrun verify --text "The Eiffel Tower is in Berlin."
 ```
+
+`export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY` overrides the saved key.
 
 `clearrun verify` scores text through `POST /api/score`. It does not look up a verdict id. Use the curl in the verify section for that.
 
 ```bash
+clearrun login
+clearrun whoami
+clearrun logout
 clearrun verify answer.txt
 clearrun verify responses/ answer.txt --json
 clearrun verify --config ci/clearrun.config.json --threshold 75
@@ -118,7 +122,7 @@ Package page: [packages/cli/README.md](../packages/cli/README.md).
 
 ## MCP
 
-`@clearrun/mcp` 0.1.2 is a stdio server. It calls the hosted API through the SDK. If `CLEARRUN_API_KEY` is missing, every tool returns an error and does not call the API. The key is not written into tool results.
+`@clearrun/mcp` 0.2.0 is a stdio server. It calls the hosted API through the SDK. If no key is configured, every tool returns the missing-key message and does not call the API. The server also logs that message to stderr at startup. The key is not written into tool results. A key saved with `clearrun login` is used when `CLEARRUN_API_KEY` is unset.
 
 Install by letting the host run:
 

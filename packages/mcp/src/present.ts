@@ -6,8 +6,7 @@
 // Receipt is copied only when the response actually has it.
 // Nothing here is filled in when the API omits it.
 
-export const MISSING_KEY_MESSAGE =
-  'No ClearRun API key is configured. Set CLEARRUN_API_KEY to a ClearRun API key (Pro plan or higher).';
+export { MISSING_API_KEY_MESSAGE as MISSING_KEY_MESSAGE } from '@clearrun/sdk';
 
 export function redactSecret(text: string, secret: string): string {
   if (!secret) return text;

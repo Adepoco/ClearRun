@@ -1,6 +1,6 @@
 {
   "name": "@clearrun/sdk",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "ClearRun SDK. Score AI answers for honesty (confidence vs reasoning) through the hosted API. Not a fact-checker.",
   "license": "MIT",
   "author": "Adepoco <contact@adepoco.com>",

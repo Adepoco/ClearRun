@@ -18,7 +18,7 @@
     "build:packages": "npm run build -w @clearrun/core-types && npm run build -w @clearrun/sdk && npm run build -w @clearrun/mcp && npm run build -w @clearrun/scoring && npm run build -w @clearrun/security && npm run build -w @clearrun/vendors && npm run build -w @clearrun/cli",
     "typecheck": "tsc -b --pretty false",
     "test:sdk": "npm run build -w @clearrun/core-types && npm run test -w @clearrun/sdk",
-    "test:cli": "npm run test -w @clearrun/cli",
+    "test:cli": "npm run build -w @clearrun/core-types && npm run build -w @clearrun/sdk && npm run test -w @clearrun/cli",
     "test:mcp": "npm run build -w @clearrun/core-types && npm run build -w @clearrun/sdk && npm run test -w @clearrun/mcp",
     "validate:schema": "node scripts/validate_schema.js",
     "test": "npm run test:sdk && npm run test:cli && npm run test:mcp && npm run validate:schema",

@@ -7,11 +7,17 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { createKernelClient, HostedApiError, type FetchLike, type HonestyKernelClient } from '@clearrun/sdk';
+import {
+  createKernelClient,
+  HostedApiError,
+  resolveClearRunApiKey,
+  type FetchLike,
+  type HonestyKernelClient,
+} from '@clearrun/sdk';
 import { MISSING_KEY_MESSAGE, presentApiResult, redactSecret } from './present.js';
 
 export const SERVER_NAME = 'clearrun';
-export const SERVER_VERSION = '0.1.2';
+export const SERVER_VERSION = '0.2.0';
 
 export const HONESTY_NOTE =
   'ClearRun scores honesty, meaning whether an answer\'s confidence is backed by its reasoning. It is not a fact-checker. A high score does not mean the answer is true.';
@@ -23,8 +29,10 @@ export interface ClearRunMcpOptions {
   apiKey?: string;
   /** Hosted API base URL. Defaults to https://api.clearrun.net inside the SDK. */
   baseUrl?: string;
-  /** Environment to read CLEARRUN_API_KEY from. Defaults to process.env. */
+  /** Environment to read CLEARRUN_API_KEY and the CLI config path from. Defaults to process.env. */
   env?: NodeJS.ProcessEnv;
+  /** Override the CLI config path (~/.config/clearrun/config.json). Used by tests. */
+  configPath?: string;
   /** Injectable fetch for tests. Production uses the SDK default. */
   fetch?: FetchLike;
 }
@@ -36,10 +44,13 @@ type ToolResult = {
 };
 
 function resolveApiKey(options: ClearRunMcpOptions): string {
-  const configured = options.apiKey?.trim() ?? '';
-  if (configured) return configured;
   const env = options.env ?? process.env;
-  return (env.CLEARRUN_API_KEY ?? '').trim();
+  const resolved = resolveClearRunApiKey({
+    apiKey: options.apiKey,
+    env,
+    configPath: options.configPath,
+  });
+  return resolved?.apiKey ?? '';
 }
 
 function toolError(message: string): ToolResult {
