@@ -4,8 +4,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { FetchLike } from '@clearrun/sdk';
@@ -13,6 +14,7 @@ import {
   createClearRunServer,
   MISSING_KEY_MESSAGE,
   TOOL_NAMES,
+  warnIfApiKeyMissing,
   type ClearRunMcpOptions,
 } from '../src/index';
 
@@ -90,7 +92,9 @@ test('missing key: every tool returns a Pro-plan error and does not call the API
       assert.equal(result.isError, true);
       const text = textOf(result);
       assert.equal(text, MISSING_KEY_MESSAGE);
-      assert.match(text, /ClearRun API key \(Pro plan or higher\)/);
+      assert.match(text, /https:\/\/api\.clearrun\.net\/account\/keys/);
+      assert.match(text, /npx @clearrun\/cli login/);
+      assert.match(text, /CLEARRUN_API_KEY/);
       assert.equal(text.includes(API_KEY), false);
       assert.doesNotMatch(text, /forceMock|MockKernelClient|"score"/);
     }
@@ -226,6 +230,50 @@ test('a receipt on the API payload is passed through and not invented otherwise'
     assert.equal(body.scoringVersion, 'ck-1.0.0');
     assert.deepEqual(body.receipt, receipt);
   });
+});
+
+test('config file supplies the key when the environment does not, and the environment wins', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'clearrun-mcp-'));
+  const configPath = join(dir, 'config.json');
+  const fileKey = 'cr_file_key_not_a_secret';
+  writeFileSync(configPath, JSON.stringify({ apiKey: fileKey }));
+  const { fetch, calls } = stubFetch(() => ({ status: 200, body: { verdict: sampleVerdict } }));
+  await withClient({ env: {}, configPath, fetch }, async (client) => {
+    const result = await client.callTool({ name: 'clearrun_score', arguments: { responseText: 'hello' } });
+    assert.notEqual(result.isError, true);
+    assert.equal(textOf(result).includes(fileKey), false);
+  });
+  assert.equal(calls[0].init.headers?.Authorization, `Bearer ${fileKey}`);
+
+  const envKey = 'cr_env_key_not_a_secret';
+  const second = stubFetch(() => ({ status: 200, body: { verdict: sampleVerdict } }));
+  await withClient({ env: { CLEARRUN_API_KEY: envKey }, configPath, fetch: second.fetch }, async (client) => {
+    const result = await client.callTool({ name: 'clearrun_score', arguments: { responseText: 'hello' } });
+    assert.equal(textOf(result).includes(envKey), false);
+    assert.equal(textOf(result).includes(fileKey), false);
+  });
+  assert.equal(second.calls[0].init.headers?.Authorization, `Bearer ${envKey}`);
+});
+
+test('startup logs the missing-key message and does not log a configured key', () => {
+  const home = mkdtempSync(join(tmpdir(), 'clearrun-mcp-home-'));
+  const lines: string[] = [];
+  warnIfApiKeyMissing({ HOME: home }, (line) => lines.push(line));
+  assert.deepEqual(lines, [MISSING_KEY_MESSAGE]);
+  assert.match(lines[0], /npx @clearrun\/cli login/);
+  assert.equal(lines[0].includes('cr_file_key_not_a_secret'), false);
+
+  const quiet: string[] = [];
+  warnIfApiKeyMissing({ CLEARRUN_API_KEY: 'cr_env_key_not_a_secret', HOME: home }, (line) => quiet.push(line));
+  assert.deepEqual(quiet, []);
+
+  const configHome = mkdtempSync(join(tmpdir(), 'clearrun-mcp-home-'));
+  const configPath = join(configHome, '.config', 'clearrun', 'config.json');
+  mkdirSync(dirname(configPath), { recursive: true });
+  writeFileSync(configPath, JSON.stringify({ apiKey: 'cr_file_key_not_a_secret' }));
+  const fromFile: string[] = [];
+  warnIfApiKeyMissing({ HOME: configHome }, (line) => fromFile.push(line));
+  assert.deepEqual(fromFile, []);
 });
 
 test('package copy does not use an em dash', () => {

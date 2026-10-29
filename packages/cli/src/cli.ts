@@ -6,9 +6,19 @@
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { dirname, extname, join, relative, resolve } from 'path';
+import { CredentialFileError, MISSING_API_KEY_MESSAGE } from '@clearrun/sdk';
+import {
+  loginCommand,
+  logoutCommand,
+  markHintShown,
+  resolveCliApiKey,
+  showFirstRunHint,
+  whoamiCommand,
+  type AuthIo,
+} from './auth';
 import { verify as hostedVerify, type PublicVerdict, type VerifyOptions } from './verify';
 
-export const VERSION = '0.1.1';
+export const VERSION = '0.2.0';
 export const CONFIG_FILENAME = 'clearrun.config.json';
 /** File types picked up when a config or CLI path is a directory. */
 export const DIRECTORY_EXTENSIONS = ['.txt', '.md', '.markdown'];
@@ -28,6 +38,9 @@ export const HELP = `
 ClearRun CLI ${VERSION}. Score AI responses for reliability.
 
 Usage:
+  clearrun login                        Open the API key page and save a key
+  clearrun logout                       Remove the saved key
+  clearrun whoami                       Show whether a key is configured (masked)
   clearrun verify <file> [<file> ...]   Score one or more files
   clearrun verify --text "..."          Score inline text
   clearrun verify                       Score the "paths" in clearrun.config.json
@@ -35,11 +48,18 @@ Usage:
   clearrun --version                    Show the CLI version
 
 Options:
-  --api-key <key>      API key (or set CLEARRUN_API_KEY)
+  --api-key <key>      API key. Overrides CLEARRUN_API_KEY and saved config
   --base-url <url>     API base URL (default: https://api.clearrun.net)
-  --config <path>      Path to a config file (default: ./clearrun.config.json)
+  --config <path>      Path to a project config file (default: ./clearrun.config.json)
   --threshold <0-100>  Exit 1 if any input scores below this (overrides config)
   --json               Output raw JSON instead of formatted text
+
+Key lookup order:
+  1. --api-key
+  2. CLEARRUN_API_KEY
+  3. ~/.config/clearrun/config.json from clearrun login
+     (XDG_CONFIG_HOME/clearrun/config.json when XDG_CONFIG_HOME is set)
+  4. apiKey in clearrun.config.json
 
 Config file (clearrun.config.json), every field optional:
   {
@@ -51,13 +71,14 @@ Config file (clearrun.config.json), every field optional:
   }
   "paths" are relative to the config file. Directories are searched
   recursively for .txt and .md files (dot folders and node_modules skipped).
-  Prefer CLEARRUN_API_KEY over storing the key in the file.
+  Prefer CLEARRUN_API_KEY or clearrun login over apiKey in the project file.
 
 Exit codes:
   0  every input scored and passed threshold and maxIssues
   1  an input failed threshold or maxIssues, a request failed, or bad usage
 
 Examples:
+  npx @clearrun/cli login
   clearrun verify response.txt
   clearrun verify --text "The capital of France is Paris."
   clearrun verify response.txt --json
@@ -72,7 +93,7 @@ export class CliUsageError extends Error {
 }
 
 export interface CliOptions {
-  command?: 'verify';
+  command?: 'verify' | 'login' | 'logout' | 'whoami';
   help: boolean;
   version: boolean;
   files: string[];
@@ -135,8 +156,8 @@ export function parseArgs(args: string[]): CliOptions {
         opts.help = true;
         continue;
       }
-      if (arg === 'verify') {
-        opts.command = 'verify';
+      if (arg === 'verify' || arg === 'login' || arg === 'logout' || arg === 'whoami') {
+        opts.command = arg;
         continue;
       }
       throw new CliUsageError(`Unknown command: ${arg}`);
@@ -243,6 +264,12 @@ export interface RunDeps {
   verify?: (text: string, options?: VerifyOptions) => Promise<PublicVerdict>;
   stdout?: (line: string) => void;
   stderr?: (line: string) => void;
+  /** Opens the API key page. Tests pass their own function. Defaults to the system browser. */
+  openUrl?: (url: string) => void;
+  /** Reads the pasted key. Tests pass their own function. Defaults to a hidden stdin prompt. */
+  readLine?: (prompt: string) => Promise<string>;
+  /** Injectable HTTP client. Login does not call it unless a free key check exists. */
+  fetch?: AuthIo['fetch'];
 }
 
 interface Input {
@@ -275,6 +302,27 @@ function formatVerdict(v: PublicVerdict, out: (line: string) => void): void {
   out(v.summary);
 }
 
+function authIo(env: Record<string, string | undefined>, deps: RunDeps, out: (line: string) => void, err: (line: string) => void, projectApiKey?: string): AuthIo {
+  return {
+    env,
+    stdout: out,
+    stderr: err,
+    openUrl: deps.openUrl,
+    readLine: deps.readLine,
+    fetch: deps.fetch,
+    projectApiKey,
+    baseUrl: undefined,
+  };
+}
+
+function projectKeyQuiet(cwd: string, configPath?: string): string {
+  try {
+    return loadConfig(cwd, configPath).config.apiKey?.trim() ?? '';
+  } catch {
+    return '';
+  }
+}
+
 /** Runs the CLI and resolves to the process exit code. Never calls process.exit. */
 export async function run(args: string[], deps: RunDeps = {}): Promise<number> {
   const cwd = deps.cwd ?? process.cwd();
@@ -289,15 +337,27 @@ export async function run(args: string[], deps: RunDeps = {}): Promise<number> {
   try {
     opts = parseArgs(args);
     if (opts.help || args.length === 0) {
+      showFirstRunHint(authIo(env, deps, out, err, projectKeyQuiet(cwd, opts.configPath)));
       out(HELP);
       return 0;
     }
     if (opts.version) {
+      showFirstRunHint(authIo(env, deps, out, err, projectKeyQuiet(cwd, opts.configPath)));
       out(VERSION);
       return 0;
     }
+    if (opts.command === 'login' || opts.command === 'logout' || opts.command === 'whoami') {
+      if (opts.files.length > 0 || opts.text !== undefined || opts.json) {
+        throw new CliUsageError(`${opts.command} does not take inputs.`);
+      }
+      const io = authIo(env, deps, out, err, projectKeyQuiet(cwd, opts.configPath));
+      if (opts.baseUrl) io.baseUrl = opts.baseUrl;
+      if (opts.command === 'login') return await loginCommand(io);
+      if (opts.command === 'logout') return logoutCommand(io);
+      return whoamiCommand(io, opts.apiKey);
+    }
     if (opts.command !== 'verify') {
-      throw new CliUsageError('Missing command. Use "clearrun verify".');
+      throw new CliUsageError('Missing command. Use "clearrun verify", or "clearrun login" to save an API key.');
     }
 
     loaded = loadConfig(cwd, opts.configPath);
@@ -310,6 +370,7 @@ export async function run(args: string[], deps: RunDeps = {}): Promise<number> {
       inputs = collectFiles(loaded.config.paths, loaded.baseDir).map((f) => ({ label: relative(cwd, f) || f, file: f }));
       if (inputs.length === 0) throw new CliUsageError('No .txt or .md files found in config "paths"');
     } else {
+      showFirstRunHint(authIo(env, deps, out, err, loaded.config.apiKey));
       out(HELP);
       return 0;
     }
@@ -324,8 +385,23 @@ export async function run(args: string[], deps: RunDeps = {}): Promise<number> {
 
   const { config } = loaded;
   const gate: Gate = { threshold: opts.threshold ?? config.threshold, maxIssues: config.maxIssues };
+  let resolvedKey: ReturnType<typeof resolveCliApiKey>;
+  try {
+    resolvedKey = resolveCliApiKey(env, opts.apiKey, config.apiKey);
+  } catch (e: unknown) {
+    if (e instanceof CredentialFileError) {
+      err(e.message);
+      return 1;
+    }
+    throw e;
+  }
+  if (!resolvedKey) {
+    err(MISSING_API_KEY_MESSAGE);
+    markHintShown(env);
+    return 1;
+  }
   const verifyOptions: VerifyOptions = {
-    apiKey: opts.apiKey ?? env.CLEARRUN_API_KEY ?? config.apiKey,
+    apiKey: resolvedKey.apiKey,
     baseUrl: opts.baseUrl ?? config.baseUrl,
   };
 

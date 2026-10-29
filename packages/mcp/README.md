@@ -1,6 +1,21 @@
 # @clearrun/mcp
 
-Stdio [MCP](https://modelcontextprotocol.io) server for [ClearRun](https://clearrun.net). Version 0.1.2.
+## Get an API key
+
+Hosted scoring needs a ClearRun account and an API key. Keys are a Pro plan or higher feature. A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+
+1. Open [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). Sign in on that page if you need an account. That page is where you create a key.
+2. Save the key:
+
+```bash
+npx @clearrun/cli login
+```
+
+Or set `CLEARRUN_API_KEY` in the host config below. Do not commit a real key.
+
+The server checks a key passed in code, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. When no key is configured, every tool returns that same message and the process logs it to stderr at startup. The key is never logged or written into a tool result.
+
+Stdio [MCP](https://modelcontextprotocol.io) server for [ClearRun](https://clearrun.net). Version 0.2.0.
 
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
@@ -12,9 +27,7 @@ Use it when an assistant should check an answer before you rely on it. The tools
 
 ## Access
 
-An API key is required. Keys are a Pro plan or higher feature. Create one while signed in at [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
-
-Set the key in the environment variable `CLEARRUN_API_KEY`. The server also accepts a key passed in code when you construct it. If the key is missing, every tool returns an error and does not call the API. The key is never logged or written into a tool result. Do not commit a real key.
+See **Get an API key** above. A key passed to `createClearRunServer({ apiKey })` overrides the environment and the config file.
 
 Node.js 18 or newer is required.
 
@@ -30,7 +43,7 @@ Or install it in a project:
 npm install @clearrun/mcp
 ```
 
-`@clearrun/mcp` 0.1.2 depends on `@clearrun/sdk` ^0.1.1 and `@clearrun/core-types` ^0.1.0.
+`@clearrun/mcp` 0.2.0 depends on `@clearrun/sdk` ^0.2.0 and `@clearrun/core-types` ^0.1.0.
 
 From a clone of [https://github.com/Adepoco/ClearRun](https://github.com/Adepoco/ClearRun):
 
@@ -169,7 +182,7 @@ That public request does not use an API key. The MCP tool `clearrun_verify` stil
 
 ## Registry name
 
-`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 0.1.2, stdio, `CLEARRUN_API_KEY` as a required secret). Publishing that manifest is a separate step from this repository. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
+`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 0.2.0, stdio, `CLEARRUN_API_KEY` as a required secret). Publishing that manifest is a separate step from this repository. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
 
 ## Links
 

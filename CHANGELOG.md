@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.0 (2026-10-29)
+
+### @clearrun/cli
+- Version 0.2.0.
+- `clearrun login` opens https://api.clearrun.net/account/keys, asks for a key, and saves it to `~/.config/clearrun/config.json` with mode 0600.
+- `clearrun logout` removes that saved key. `clearrun whoami` prints a masked key and where it came from.
+- Key lookup order: `--api-key`, `CLEARRUN_API_KEY`, the user config file, then `apiKey` in `clearrun.config.json`.
+- The first run with no key prints a one-time hint. There is no npm postinstall script.
+- `clearrun verify` exits 1 with the missing-key message when no key is configured.
+
+### @clearrun/sdk
+- Version 0.2.0.
+- `createKernelClient()` reads `CLEARRUN_API_KEY`, then the CLI config file.
+- A missing key throws `MissingApiKeyError`. The message includes the keys page, `npx @clearrun/cli login`, and `CLEARRUN_API_KEY`.
+
+### @clearrun/mcp
+- Version 0.2.0. Depends on `@clearrun/sdk` ^0.2.0.
+- Tools return the same missing-key message. Startup logs it to stderr when no key is configured.
+- The server reads the CLI config file when `CLEARRUN_API_KEY` is unset.
+- `server.json` is at version 0.2.0. This repository does not publish the package.
+
+Login does not call the API. Scoring routes spend credits, and the account routes use a browser session. A device-login flow that returns a key without a paste would need hosted endpoints: `POST /api/cli/device` and `POST /api/cli/device/token`.
+
 ## 0.1.2 (2026-10-28)
 
 ### @clearrun/mcp
