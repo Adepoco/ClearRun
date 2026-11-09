@@ -9,12 +9,18 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import {
   createKernelClient,
+  createVerifyClient,
   HostedApiError,
   resolveClearRunApiKey,
   type FetchLike,
   type HonestyKernelClient,
 } from '@clearrun/sdk';
-import { MISSING_KEY_MESSAGE, presentApiResult, redactSecret } from './present.js';
+import {
+  MISSING_KEY_MESSAGE,
+  presentHostedCall,
+  redactSecret,
+  type HostedTool,
+} from './present.js';
 
 export const SERVER_NAME = 'clearrun';
 export const SERVER_VERSION = '0.2.0';
@@ -60,11 +66,14 @@ function toolError(message: string): ToolResult {
   };
 }
 
-function toolOk(payload: Record<string, unknown>): ToolResult {
-  return {
-    content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
-    structuredContent: payload,
+function presentedResult(tool: HostedTool, data: unknown): ToolResult {
+  const presented = presentHostedCall(tool, data);
+  const result: ToolResult = {
+    content: [{ type: 'text', text: presented.text }],
+    structuredContent: presented.payload,
   };
+  if (presented.isError) result.isError = true;
+  return result;
 }
 
 function formatFailure(err: unknown, apiKey: string): string {
@@ -91,13 +100,29 @@ function clientFor(options: ClearRunMcpOptions, apiKey: string): HonestyKernelCl
 
 async function runHosted(
   options: ClearRunMcpOptions,
+  tool: HostedTool,
   call: (client: HonestyKernelClient) => Promise<unknown>
 ): Promise<ToolResult> {
   const apiKey = resolveApiKey(options);
   if (!apiKey) return toolError(MISSING_KEY_MESSAGE);
   try {
     const data = await call(clientFor(options, apiKey));
-    return toolOk(presentApiResult(data));
+    return presentedResult(tool, data);
+  } catch (err) {
+    return toolError(formatFailure(err, apiKey));
+  }
+}
+
+/** Public lookup. GET /api/verify sends no key, so a missing key is not a failure. */
+async function runVerify(options: ClearRunMcpOptions, verdictId: string): Promise<ToolResult> {
+  const apiKey = resolveApiKey(options);
+  try {
+    const client = createVerifyClient({
+      baseUrl: options.baseUrl,
+      deps: options.fetch ? { fetch: options.fetch } : undefined,
+    });
+    const data = await client.verify({ verdictId });
+    return presentedResult('verify', data);
   } catch (err) {
     return toolError(formatFailure(err, apiKey));
   }
@@ -116,14 +141,14 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
       description:
         'Score text that was already written. ' +
         HONESTY_NOTE +
-        ' Calls POST /api/score on the hosted ClearRun API. Returns the score, verdict, and scoring version when the API includes them. A receipt is included only when the API sends one.',
+        ' Calls POST /api/score on the hosted ClearRun API. Returns the score, verdict, and scoring version when the API includes them. A receipt is included only when the API sends one. The tool is an error when the body has no verdict.',
       inputSchema: {
         responseText: z.string().min(1).describe('The AI answer, or other text, to score for honesty.'),
         modelId: z.string().min(1).optional().describe('Optional model id to send with the text.'),
       },
     },
     async ({ responseText, modelId }) =>
-      runHosted(options, (client) => client.score({ responseText, modelId }))
+      runHosted(options, 'score', (client) => client.score({ responseText, modelId }))
   );
 
   server.registerTool(
@@ -133,7 +158,7 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
       description:
         'Score an existing AI answer, including the prompt that produced it when you have it. ' +
         HONESTY_NOTE +
-        ' Calls POST /api/evaluate on the hosted ClearRun API. Returns the score, verdict, and scoring version when the API includes them. A receipt is included only when the API sends one.',
+        ' Calls POST /api/evaluate on the hosted ClearRun API. Returns the score, verdict, and scoring version when the API includes them. A receipt is included only when the API sends one. The tool is an error when the body has no verdict.',
       inputSchema: {
         responseText: z.string().min(1).describe('The AI answer to score for honesty.'),
         prompt: z.string().min(1).optional().describe('The prompt that produced the answer, when you have it.'),
@@ -142,7 +167,7 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
       },
     },
     async ({ responseText, prompt, modelId, sessionId }) =>
-      runHosted(options, (client) => client.evaluate({ responseText, prompt, modelId, sessionId }))
+      runHosted(options, 'evaluate', (client) => client.evaluate({ responseText, prompt, modelId, sessionId }))
   );
 
   server.registerTool(
@@ -152,7 +177,7 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
       description:
         'Send a message to the hosted ClearRun API, which generates an answer and scores it. ' +
         HONESTY_NOTE +
-        ' Calls POST /api/chat. Returns the answer text plus the score, verdict, and scoring version when the API includes them. A receipt is included only when the API sends one.',
+        ' Calls POST /api/chat. Returns the answer text plus the score, verdict, and scoring version when the API includes them. A receipt is included only when the API sends one. The tool is an error when the body has no answer and no verdict.',
       inputSchema: {
         message: z.string().min(1).describe('The user message to send to the hosted API.'),
         modelId: z.string().min(1).optional().describe('Optional model id to send with the message.'),
@@ -160,7 +185,7 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
       },
     },
     async ({ message, modelId, sessionId }) =>
-      runHosted(options, (client) => client.chat({ message, modelId, sessionId }))
+      runHosted(options, 'chat', (client) => client.chat({ message, modelId, sessionId }))
   );
 
   server.registerTool(
@@ -168,14 +193,14 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
     {
       title: 'Verify a verdict id',
       description:
-        'Look up a ClearRun verdict id on the public verification endpoint (GET /api/verify/{verdictId}). ' +
+        'Look up a ClearRun verdict id on the public verification endpoint (GET /api/verify/{verdictId}). No API key is sent. ' +
         HONESTY_NOTE +
-        ' Returns the verification result the API returns, including the verdict when the API includes one. A receipt is included only when the API sends one.',
+        ' Returns the verification result when the API returns one. The tool is an error when the body is not a verification result. A receipt is included only when the API sends one.',
       inputSchema: {
         verdictId: z.string().min(1).describe('The verdict id to look up.'),
       },
     },
-    async ({ verdictId }) => runHosted(options, (client) => client.verify({ verdictId }))
+    async ({ verdictId }) => runVerify(options, verdictId)
   );
 
   return server;

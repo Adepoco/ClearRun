@@ -12,7 +12,8 @@ import { redactSecret } from './present.js';
 
 export { createClearRunServer, HONESTY_NOTE, SERVER_NAME, SERVER_VERSION, TOOL_NAMES } from './server.js';
 export type { ClearRunMcpOptions } from './server.js';
-export { MISSING_KEY_MESSAGE, presentApiResult } from './present.js';
+export { MISSING_KEY_MESSAGE, presentApiResult, presentHostedCall } from './present.js';
+export type { HostedPresentation, HostedTool } from './present.js';
 
 /** Logs the missing-key message to stderr when no key is configured. Does not log a key. */
 export function warnIfApiKeyMissing(

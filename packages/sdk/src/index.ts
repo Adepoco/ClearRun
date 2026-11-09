@@ -8,7 +8,7 @@
 // HostedApiClient (hosted API + API key). MockKernelClient is opt-in only
 // (`forceMock` / `mock`). Neither imports closed code.
 
-import type { HonestyKernelClient, HostedApiConfig } from '@clearrun/core-types';
+import type { HonestyKernelClient, HostedApiConfig, VerifyRequest, VerifyResponse } from '@clearrun/core-types';
 import {
   MissingApiKeyError,
   resolveClearRunApiKey,
@@ -44,6 +44,7 @@ export type {
 } from './credentials';
 
 // Re-export the boundary types so consumers can import everything from the SDK.
+export { isVerdict } from '@clearrun/core-types';
 export type {
   HonestyKernelClient,
   HostedApiConfig,
@@ -62,6 +63,31 @@ export type {
   VerifyRequest,
   VerifyResponse,
 } from '@clearrun/core-types';
+
+export interface CreateVerifyClientOptions {
+  /** Hosted API base URL. Defaults to https://api.clearrun.net. */
+  baseUrl?: string;
+  /** Optional request timeout in milliseconds. */
+  timeoutMs?: number;
+  /** Injectable fetch for tests. Production uses global fetch. */
+  deps?: HostedClientDeps;
+}
+
+/**
+ * Public verdict lookup. GET /api/verify/{verdictId} sends no API key.
+ * Scoring stays on createKernelClient and still requires a key.
+ */
+export function createVerifyClient(
+  options: CreateVerifyClientOptions = {}
+): { verify(req: VerifyRequest): Promise<VerifyResponse> } {
+  const client = new HostedApiClient(
+    { baseUrl: options.baseUrl, apiKey: '', timeoutMs: options.timeoutMs },
+    options.deps
+  );
+  return {
+    verify: (req) => client.verify(req),
+  };
+}
 
 export interface CreateKernelClientOptions {
   /** Hosted API config. `apiKey` may also come from `CLEARRUN_API_KEY`. */

@@ -20,6 +20,7 @@ import {
   type VerifyResponse,
   type ApiErrorBody,
 } from '@clearrun/core-types';
+import { MissingApiKeyError } from './credentials';
 
 /** Minimal fetch signature so the client works in Node 18+, browsers, and tests. */
 export type FetchLike = (
@@ -79,6 +80,13 @@ export class HostedApiClient implements HonestyKernelClient {
     return headers;
   }
 
+  /** score, evaluate, and chat spend a hosted call and require a key. verify does not. */
+  private assertCanScore(): void {
+    if (!this.apiKey.trim()) {
+      throw new MissingApiKeyError();
+    }
+  }
+
   private async request<T>(
     method: 'GET' | 'POST',
     path: string,
@@ -110,10 +118,12 @@ export class HostedApiClient implements HonestyKernelClient {
   }
 
   evaluate(req: EvaluateRequest): Promise<EvaluateResponse> {
+    this.assertCanScore();
     return this.request<EvaluateResponse>('POST', '/api/evaluate', req);
   }
 
   async chat(req: ChatRequest): Promise<ChatResponse> {
+    this.assertCanScore();
     const data = await this.request<ChatResponse & { response?: unknown }>('POST', '/api/chat', req);
     // The documented field is responseText (docs/CONTRACT.md). The hosted API
     // returned the generated answer only as `response` until it was fixed, so
@@ -125,6 +135,7 @@ export class HostedApiClient implements HonestyKernelClient {
   }
 
   score(req: ScoreRequest): Promise<ScoreResponse> {
+    this.assertCanScore();
     return this.request<ScoreResponse>('POST', '/api/score', req);
   }
 

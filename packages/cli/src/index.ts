@@ -4,16 +4,17 @@
 
 // ============================================================================
 // CLEARRUN CLI
-// Usage: npx clearrun verify <file>
-//        npx clearrun verify --text "AI response text"
+// Usage: npx clearrun score <file>
+//        npx clearrun score --text "AI response text"
+//        npx clearrun verify <verdictId>
 //        npx clearrun --help
 // ============================================================================
 
 import { run } from './cli';
 
 export * from './cli';
-export { verify } from './verify';
-export type { PublicVerdict, VerifyOptions } from './verify';
+export { lookupVerdict, scoreText } from './verify';
+export type { LookupResult, PublicVerdict, VerifyOptions } from './verify';
 
 if (require.main === module) {
   run(process.argv.slice(2)).then(

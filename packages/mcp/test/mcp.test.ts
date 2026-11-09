@@ -13,6 +13,7 @@ import type { FetchLike } from '@clearrun/sdk';
 import {
   createClearRunServer,
   MISSING_KEY_MESSAGE,
+  presentApiResult,
   TOOL_NAMES,
   warnIfApiKeyMissing,
   type ClearRunMcpOptions,
@@ -69,7 +70,7 @@ async function withClient(options: ClearRunMcpOptions, fn: (client: Client) => P
   }
 }
 
-test('missing key: every tool returns a Pro-plan error and does not call the API', async () => {
+test('missing key: score, evaluate, and chat return the key error and do not call the API', async () => {
   const { fetch, calls } = stubFetch(() => ({ status: 200, body: { verdict: sampleVerdict } }));
   await withClient({ apiKey: '   ', env: {}, fetch }, async (client) => {
     const listed = await client.listTools();
@@ -85,7 +86,6 @@ test('missing key: every tool returns a Pro-plan error and does not call the API
       ['clearrun_score', { responseText: 'hello' }],
       ['clearrun_evaluate', { responseText: 'hello', prompt: 'question' }],
       ['clearrun_chat', { message: 'hello' }],
-      ['clearrun_verify', { verdictId: 'v1' }],
     ];
     for (const [name, args] of callsFor) {
       const result = await client.callTool({ name, arguments: args });
@@ -100,6 +100,23 @@ test('missing key: every tool returns a Pro-plan error and does not call the API
     }
   });
   assert.equal(calls.length, 0);
+});
+
+test('missing key: clearrun_verify looks up the id and does not send a key', async () => {
+  const { fetch, calls } = stubFetch(() => ({ status: 200, body: { verified: true, verdict: sampleVerdict } }));
+  await withClient({ apiKey: '   ', env: {}, fetch }, async (client) => {
+    const result = await client.callTool({ name: 'clearrun_verify', arguments: { verdictId: 'v1' } });
+    assert.notEqual(result.isError, true);
+    const body = JSON.parse(textOf(result)) as { verified: boolean; scored: boolean; answered: boolean };
+    assert.equal(body.verified, true);
+    assert.equal(body.scored, true);
+    assert.equal(body.answered, false);
+    assert.equal(textOf(result).includes(API_KEY), false);
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].init.method, 'GET');
+  assert.match(calls[0].url, /\/api\/verify\/v1$/);
+  assert.equal(calls[0].init.headers?.Authorization, undefined);
 });
 
 test('401 from the API is returned plainly and the key is not echoed', async () => {
@@ -162,6 +179,9 @@ test('success shape returns score, verdict, and scoring version and does not inv
     assert.notEqual(scored.isError, true);
     const scoreBody = JSON.parse(textOf(scored)) as Record<string, unknown>;
     assert.equal(scoreBody.score, 82);
+    assert.equal(scoreBody.outcome, 'scored');
+    assert.equal(scoreBody.scored, true);
+    assert.equal(scoreBody.answered, false);
     assert.equal(scoreBody.scoringVersion, 'ck-1.0.0');
     assert.equal((scoreBody.verdict as { verdictId: string }).verdictId, 'v1');
     assert.equal((scoreBody.verdict as { scoringVersion: string }).scoringVersion, 'ck-1.0.0');
@@ -184,6 +204,8 @@ test('success shape returns score, verdict, and scoring version and does not inv
       textOf(await client.callTool({ name: 'clearrun_chat', arguments: { message: 'Capital of France?' } }))
     ) as Record<string, unknown>;
     assert.equal(chat.responseText, 'Paris.');
+    assert.equal(chat.answered, true);
+    assert.equal(chat.scored, true);
     assert.equal(chat.score, 82);
     assert.equal(chat.scoringVersion, 'ck-1.0.0');
     assert.equal(Object.prototype.hasOwnProperty.call(chat, 'receipt'), false);
@@ -192,6 +214,8 @@ test('success shape returns score, verdict, and scoring version and does not inv
       textOf(await client.callTool({ name: 'clearrun_verify', arguments: { verdictId: 'v1' } }))
     ) as Record<string, unknown>;
     assert.equal(verified.verified, true);
+    assert.equal(verified.scored, true);
+    assert.equal(verified.answered, false);
     assert.equal(verified.scoringVersion, 'ck-1.0.0');
     assert.equal((verified.verdict as { score: number }).score, 82);
     assert.equal(Object.prototype.hasOwnProperty.call(verified, 'receipt'), false);
@@ -205,18 +229,108 @@ test('success shape returns score, verdict, and scoring version and does not inv
   assert.equal(calls[3].init.headers?.Authorization, undefined);
 });
 
-test('a missing scoring version or receipt is left out', async () => {
+test('presentApiResult does not invent a scoring version or a receipt', () => {
+  const verdict = { ...sampleVerdict } as Record<string, unknown>;
+  delete verdict.scoringVersion;
+  const body = presentApiResult({ verdict });
+  assert.equal(body.score, 82);
+  assert.equal(Object.prototype.hasOwnProperty.call(body, 'scoringVersion'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(body, 'receipt'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(body.verdict as object, 'scoringVersion'), false);
+});
+
+test('a verdict missing scoringVersion is not a successful score', async () => {
   const verdict = { ...sampleVerdict } as Record<string, unknown>;
   delete verdict.scoringVersion;
   const { fetch } = stubFetch(() => ({ status: 200, body: { verdict } }));
   await withClient({ apiKey: API_KEY, env: {}, fetch }, async (client) => {
-    const body = JSON.parse(
-      textOf(await client.callTool({ name: 'clearrun_score', arguments: { responseText: 'hello' } }))
-    ) as Record<string, unknown>;
+    const result = await client.callTool({ name: 'clearrun_score', arguments: { responseText: 'hello' } });
+    assert.equal(result.isError, true);
+    const body = JSON.parse(textOf(result)) as { outcome: string; scored: boolean; error: string };
+    assert.equal(body.outcome, 'failed');
+    assert.equal(body.scored, false);
+    assert.equal(body.answered, false);
+    assert.match(body.error, /did not return a verdict/);
+  });
+});
+
+test('a 200 body with nothing to read is a tool error', async () => {
+  const cases: Array<[string, Record<string, unknown>, string]> = [
+    ['clearrun_score', { responseText: 'hello' }, 'did not return a verdict'],
+    ['clearrun_evaluate', { responseText: 'hello' }, 'did not return a verdict'],
+    ['clearrun_chat', { message: 'hello' }, 'did not return an answer or a verdict'],
+    ['clearrun_verify', { verdictId: 'v1' }, 'did not return a verification result'],
+  ];
+  for (const [name, args, message] of cases) {
+    const { fetch } = stubFetch(() => ({ status: 200, body: {} }));
+    await withClient({ apiKey: API_KEY, env: {}, fetch }, async (client) => {
+      const result = await client.callTool({ name, arguments: args });
+      assert.equal(result.isError, true, name);
+      const body = JSON.parse(textOf(result)) as { outcome: string; answered: boolean; scored: boolean; error: string };
+      assert.equal(body.outcome, 'failed', name);
+      assert.equal(body.answered, false, name);
+      assert.equal(body.scored, false, name);
+      assert.match(body.error, new RegExp(message), name);
+      assert.doesNotMatch(body.error, /invalid/i, name);
+      assert.equal(textOf(result).includes(API_KEY), false);
+    });
+  }
+});
+
+test('chat with an answer and no verdict is answered, not scored', async () => {
+  const { fetch } = stubFetch(() => ({ status: 200, body: { response: 'Paris.' } }));
+  await withClient({ apiKey: API_KEY, env: {}, fetch }, async (client) => {
+    const result = await client.callTool({ name: 'clearrun_chat', arguments: { message: 'Capital?' } });
+    assert.equal(result.isError, true);
+    const body = JSON.parse(textOf(result)) as {
+      outcome: string;
+      answered: boolean;
+      scored: boolean;
+      responseText: string;
+    };
+    assert.equal(body.outcome, 'answered');
+    assert.equal(body.answered, true);
+    assert.equal(body.scored, false);
+    assert.equal(body.responseText, 'Paris.');
+  });
+});
+
+test('chat with a legacy response field and a verdict is answered and scored', async () => {
+  const { fetch } = stubFetch(() => ({ status: 200, body: { response: 'Paris.', verdict: sampleVerdict } }));
+  await withClient({ apiKey: API_KEY, env: {}, fetch }, async (client) => {
+    const result = await client.callTool({ name: 'clearrun_chat', arguments: { message: 'Capital?' } });
+    assert.notEqual(result.isError, true);
+    const body = JSON.parse(textOf(result)) as { answered: boolean; scored: boolean; responseText: string; score: number };
+    assert.equal(body.answered, true);
+    assert.equal(body.scored, true);
+    assert.equal(body.responseText, 'Paris.');
     assert.equal(body.score, 82);
-    assert.equal(Object.prototype.hasOwnProperty.call(body, 'scoringVersion'), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(body, 'receipt'), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(body.verdict as object, 'scoringVersion'), false);
+  });
+});
+
+test('chat with a verdict and no answer is scored, not answered', async () => {
+  const { fetch } = stubFetch(() => ({ status: 200, body: { verdict: sampleVerdict } }));
+  await withClient({ apiKey: API_KEY, env: {}, fetch }, async (client) => {
+    const result = await client.callTool({ name: 'clearrun_chat', arguments: { message: 'Capital?' } });
+    assert.equal(result.isError, true);
+    const body = JSON.parse(textOf(result)) as { outcome: string; answered: boolean; scored: boolean; score: number };
+    assert.equal(body.outcome, 'scored');
+    assert.equal(body.answered, false);
+    assert.equal(body.scored, true);
+    assert.equal(body.score, 82);
+  });
+});
+
+test('verify of an unknown id is readable and is not a transport error', async () => {
+  const { fetch } = stubFetch(() => ({ status: 200, body: { verified: false } }));
+  await withClient({ env: {}, fetch }, async (client) => {
+    const result = await client.callTool({ name: 'clearrun_verify', arguments: { verdictId: 'missing' } });
+    assert.notEqual(result.isError, true);
+    const body = JSON.parse(textOf(result)) as { verified: boolean; scored: boolean; error: string };
+    assert.equal(body.verified, false);
+    assert.equal(body.scored, false);
+    assert.match(body.error, /did not verify/);
+    assert.doesNotMatch(body.error, /invalid/i);
   });
 });
 

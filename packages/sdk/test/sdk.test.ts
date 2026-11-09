@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createKernelClient,
+  createVerifyClient,
   MockKernelClient,
   HostedApiClient,
   HostedApiError,
@@ -154,6 +155,40 @@ test('HostedApiClient throws HostedApiError on non-2xx', async () => {
 });
 
 // ── Factory routing ──────────────────────────────────────────────────────────
+
+test('createVerifyClient looks up a verdict without an API key and does not score', async () => {
+  const { fetch, calls } = stubFetch(() => ({ status: 200, body: { verified: true, verdict: sampleVerdict } }));
+  const client = createVerifyClient({ baseUrl: 'https://api.example.com', deps: { fetch } });
+  const res = await client.verify({ verdictId: 'v1' });
+  assert.equal(res.verified, true);
+  assert.equal(calls[0].url, 'https://api.example.com/api/verify/v1');
+  assert.equal(calls[0].init.method, 'GET');
+  assert.equal(calls[0].init.headers.Authorization, undefined);
+  assert.equal(calls[0].init.body, undefined);
+  assert.equal('score' in client, false);
+});
+
+test('a keyless hosted client refuses to score and still verifies', async () => {
+  const { fetch, calls } = stubFetch(() => ({ status: 200, body: { verified: true, verdict: sampleVerdict } }));
+  const client = new HostedApiClient({ apiKey: '  ' }, { fetch });
+  let caught: unknown;
+  try {
+    await client.score({ responseText: 'x' });
+  } catch (err) {
+    caught = err;
+  }
+  assert.ok(caught instanceof MissingApiKeyError);
+  assert.match((caught as Error).message, /https:\/\/api\.clearrun\.net\/account\/keys/);
+  assert.match((caught as Error).message, /npx @clearrun\/cli login/);
+  assert.equal((caught as Error).message.toLowerCase().includes('invalid'), false);
+  assert.equal(calls.length, 0);
+  const looked = await client.verify({ verdictId: 'v1' });
+  assert.equal(looked.verified, true);
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].url, /\/api\/verify\/v1$/);
+  assert.equal(calls[0].init.method, 'GET');
+  assert.equal(calls[0].init.headers.Authorization, undefined);
+});
 
 test('createKernelClient throws MissingApiKeyError without a key and without mock opt-in', () => {
   assert.throws(

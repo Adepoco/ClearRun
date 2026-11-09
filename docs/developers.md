@@ -35,7 +35,7 @@ Or set `CLEARRUN_API_KEY`. Do not commit a real key.
 
 Lookup order for the SDK and the MCP server: an explicit key, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. The CLI checks `--api-key` first, then that same order, then `apiKey` in `./clearrun.config.json`.
 
-Without a key, `createKernelClient()` throws `MissingApiKeyError`. The MCP tools return that same message, and the server logs it to stderr at startup. Pass `{ forceMock: true }` only for local SDK development. The mock returns schema-valid verdicts for local development. The CLI and the MCP server do not offer that mock.
+Without a key, `createKernelClient()` throws `MissingApiKeyError`. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return that same message, and the server logs it to stderr at startup. `createVerifyClient()` and `clearrun_verify` look up a verdict id with no key. Pass `{ forceMock: true }` only for local SDK development. The mock returns schema-valid verdicts for local development. The CLI and the MCP server do not offer that mock.
 
 ## Credits
 
@@ -43,7 +43,7 @@ Credits are metered per call. On the public pricing page, evaluate and score cos
 
 [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing)
 
-Those two sentences are the credit costs stated on that page. If the page changes, the page is the source. This guide does not add other credit numbers. The CLI calls score only, so each file or `--text` input costs at least 3 credits.
+Those two sentences are the credit costs stated on that page. If the page changes, the page is the source. This guide does not add other credit numbers. `clearrun score` calls score, so each file or `--text` input costs at least 3 credits. `clearrun verify` does not spend those credits.
 
 ## SDK
 
@@ -85,7 +85,7 @@ console.log(scored.verdict.score, chat.responseText, check.verified);
 | `chat` | `POST /api/chat` | `message`, optional `modelId`, `sessionId` |
 | `verify` | `GET /api/verify/{verdictId}` | `verdictId` |
 
-Auth on score, evaluate, and chat is `Authorization: Bearer <apiKey>`. `verify` does not send the key. Creating the client still requires one, unless you opted into the mock. A non-2xx response throws `HostedApiError`.
+Auth on score, evaluate, and chat is `Authorization: Bearer <apiKey>`. `verify` does not send the key. `createKernelClient()` still requires a key for scoring, unless you opted into the mock. `createVerifyClient()` looks up a verdict id with no key. A non-2xx response throws `HostedApiError`.
 
 `chat` always returns `responseText`. Optional `hosted.baseUrl` replaces `https://api.clearrun.net`. Optional `hosted.timeoutMs` aborts a slow call.
 
@@ -96,33 +96,38 @@ Package page: [packages/sdk/README.md](../packages/sdk/README.md).
 ```bash
 npm install -g @clearrun/cli
 npx @clearrun/cli login
-clearrun verify --text "The Eiffel Tower is in Berlin."
+clearrun score --text "The Eiffel Tower is in Berlin."
 ```
 
 `export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY` overrides the saved key.
 
-`clearrun verify` scores text through `POST /api/score`. It does not look up a verdict id. Use the curl in the verify section for that.
+`clearrun score` scores text through `POST /api/score`. `clearrun verify <verdictId>` looks up `GET /api/verify/{verdictId}`. The lookup does not spend a score call and does not need an API key.
 
 ```bash
 clearrun login
 clearrun whoami
 clearrun logout
-clearrun verify answer.txt
-clearrun verify responses/ answer.txt --json
-clearrun verify --config ci/clearrun.config.json --threshold 75
+clearrun score answer.txt
+clearrun score responses/ answer.txt --json
+clearrun score --config ci/clearrun.config.json --threshold 75
+clearrun verify VERDICT_ID
 clearrun --help
 clearrun --version
 ```
 
-`clearrun.config.json` can set `paths`, `threshold` (0 to 100), `maxIssues`, and `baseUrl`. With no file and no `--text`, `clearrun verify` scores every `.txt` and `.md` file under `paths`. The process exits 1 when any input is below `threshold`, has no score, has more issues than `maxIssues`, or the request fails.
+`clearrun.config.json` can set `paths`, `threshold` (0 to 100), `maxIssues`, and `baseUrl`. With no file and no `--text`, `clearrun score` scores every `.txt` and `.md` file under `paths`. A directory with no `.txt` or `.md` files exits 1. With `--json`, that failure is a JSON error document.
 
-Without a global install: `npx @clearrun/cli verify --text "..."`.
+The process exits 1 when any input scores below `threshold`, when a threshold is set and an input has no score, when an input has more issues than `maxIssues`, or when the request fails. A null score fails the run only when a threshold is set.
+
+`--json` prints one shape for one input and for many: `{ "passed": true, "results": [ ... ] }`. Each result includes `passed`. A usage error with `--json` prints `{ "passed": false, "error": "..." }`.
+
+Without a global install: `npx @clearrun/cli score --text "..."`.
 
 Package page: [packages/cli/README.md](../packages/cli/README.md).
 
 ## MCP
 
-`@clearrun/mcp` 0.2.0 is a stdio server. It calls the hosted API through the SDK. If no key is configured, every tool returns the missing-key message and does not call the API. The server also logs that message to stderr at startup. The key is not written into tool results. A key saved with `clearrun login` is used when `CLEARRUN_API_KEY` is unset.
+`@clearrun/mcp` 0.2.0 is a stdio server. It calls the hosted API through the SDK. If no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return the missing-key message and do not call the API. `clearrun_verify` looks up the public verdict id and does not need a key. The server logs the missing-key message to stderr at startup when scoring has no key. The key is not written into tool results. A key saved with `clearrun login` is used when `CLEARRUN_API_KEY` is unset.
 
 Install by letting the host run:
 
@@ -219,6 +224,8 @@ Workspace file `.vscode/mcp.json`:
 
 Ask the host in plain language, for example: "Use clearrun_score on this answer." None of the tools fact-check the answer.
 
+A successful score has `scored: true`. A successful chat has `answered: true` and `scored: true`. A 200 body with no verdict, and a chat body with no answer and no verdict, is a tool error (`outcome` is `failed`). That error does not mean a verdict id was invalid.
+
 The registry name in `package.json` is `io.github.adepoco/clearrun-mcp`. The manifest is [packages/mcp/server.json](../packages/mcp/server.json). Directory submission steps are in [LISTINGS.md](./LISTINGS.md).
 
 Package page: [packages/mcp/README.md](../packages/mcp/README.md).
@@ -233,7 +240,7 @@ curl https://api.clearrun.net/api/verify/VERDICT_ID
 
 The response reports whether the id verifies, and includes the verdict when the API has it. This confirms the stored record. It does not fact-check the original answer, and it does not spend score credits.
 
-SDK: `client.verify({ verdictId })`. MCP: `clearrun_verify`. The MCP tool still requires `CLEARRUN_API_KEY` to be configured, because the server checks the key before every tool. The public URL does not.
+SDK: `createVerifyClient().verify({ verdictId })`, or `client.verify({ verdictId })` when you already have a scoring client. MCP: `clearrun_verify`. None of those send an API key. A 200 body that is not a verification result is an error. That error does not mean the verdict id was invalid. The public URL does not use a key either.
 
 ## What you get back
 

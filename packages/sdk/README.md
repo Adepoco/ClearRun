@@ -112,7 +112,16 @@ const check = await client.verify({ verdictId: scored.verdict.verdictId });
 console.log(check.verified, check.verdict?.score);
 ```
 
-The HTTP call does not send the API key. Constructing the client still requires a key, unless you opted into the mock. You can also open the URL with no client at all. See below.
+The HTTP call does not send the API key. Constructing `createKernelClient()` still requires a key, unless you opted into the mock. To look up an id with no key, use `createVerifyClient()`:
+
+```ts
+import { createVerifyClient } from '@clearrun/sdk';
+
+const check = await createVerifyClient().verify({ verdictId: 'VERDICT_ID' });
+console.log(check.verified, check.verdict?.score);
+```
+
+`score`, `evaluate`, and `chat` on a client with no key throw `MissingApiKeyError` and do not call the API. You can also open the URL with no client at all. See below.
 
 Errors from the API throw `HostedApiError` with `status`, `message`, and optional `code`.
 

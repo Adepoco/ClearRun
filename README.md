@@ -82,7 +82,7 @@ CLI:
 
 ```bash
 npx @clearrun/cli login
-clearrun verify --text "The Eiffel Tower is in Berlin."
+clearrun score --text "The Eiffel Tower is in Berlin."
 ```
 
 `export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY` works too, and it overrides the saved key.
@@ -102,12 +102,13 @@ SDK methods and MCP tools:
 | `chat` / `clearrun_chat` | Ask the hosted API to generate an answer and score it (`POST /api/chat`). |
 | `verify` / `clearrun_verify` | Look up a verdict id (`GET /api/verify/{id}`). |
 
-CLI (this command scores text; it does not look up a verdict id):
+CLI (`score` scores text, `verify` looks up a verdict id):
 
 ```bash
-clearrun verify answer.txt
-clearrun verify --text "The capital of France is Paris." --json
-clearrun verify --config ci/clearrun.config.json --threshold 75
+clearrun score answer.txt
+clearrun score --text "The capital of France is Paris." --json
+clearrun score --config ci/clearrun.config.json --threshold 75
+clearrun verify VERDICT_ID
 ```
 
 Short examples for each client are in the package READMEs and in [docs/developers.md](docs/developers.md).

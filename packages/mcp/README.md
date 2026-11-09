@@ -13,7 +13,7 @@ npx @clearrun/cli login
 
 Or set `CLEARRUN_API_KEY` in the host config below. Do not commit a real key.
 
-The server checks a key passed in code, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. When no key is configured, every tool returns that same message and the process logs it to stderr at startup. The key is never logged or written into a tool result.
+The server checks a key passed in code, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. When no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return that same message and the process logs it to stderr at startup. `clearrun_verify` does not need a key. The key is never logged or written into a tool result.
 
 Stdio [MCP](https://modelcontextprotocol.io) server for [ClearRun](https://clearrun.net). Version 0.2.0.
 
@@ -151,6 +151,8 @@ To keep the key out of the file, set `CLEARRUN_API_KEY` in your environment and 
 
 Each tool returns JSON. When the API sends a verdict, the result includes `score`, `scoringVersion`, and the `verdict` object as returned. `responseText` (chat) and `verified` (verify) are included when the API sends them. A `receipt` field is included only when the API sends one. This package does not invent a scoring version or a receipt.
 
+`scored` is true when the body has a verdict. `answered` is true when chat text is present. A 200 body of `{}`, or a chat body with neither `responseText` nor `response`, is a tool error. A chat answer with no verdict is `answered` and not `scored`.
+
 None of these tools fact-check the answer.
 
 | Tool | What it does | Example arguments |
@@ -178,7 +180,7 @@ Hosted verdicts can be checked again with no account:
 curl https://api.clearrun.net/api/verify/VERDICT_ID
 ```
 
-That public request does not use an API key. The MCP tool `clearrun_verify` still requires `CLEARRUN_API_KEY`, because the server refuses every tool when the key is missing. The lookup does not fact-check the original answer. It returns the verification result the API returns.
+That public request does not use an API key. The MCP tool `clearrun_verify` does not need one either, and it does not send `Authorization`. The lookup does not fact-check the original answer. It returns the verification result the API returns. A body that is not a verification result is a tool error. That error does not mean the verdict id was invalid.
 
 ## Registry name
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### @clearrun/cli
+- `clearrun score` scores files, directories, and `--text`. `clearrun verify <verdictId>` looks up `GET /api/verify/{verdictId}` and does not spend a score call. It does not need an API key.
+- A directory with no `.txt` or `.md` files exits 1. With `--json`, stdout is an error document.
+- `--json` uses one shape for one input and many: `{ "passed", "results" }`. Each result includes `passed`.
+- A null score fails the run only when a threshold is set.
+
+### @clearrun/sdk
+- `createVerifyClient()` looks up a verdict id without an API key. `score`, `evaluate`, and `chat` still require a key.
+
+### @clearrun/mcp
+- A hosted 200 body with no readable verdict is a tool error. Chat reports answered, scored, or failed. `clearrun_verify` does not require an API key.
+
 ## 0.2.0 (2026-10-29)
 
 ### @clearrun/cli

@@ -16,7 +16,7 @@ import {
   whoamiCommand,
   type AuthIo,
 } from './auth';
-import { verify as hostedVerify, type PublicVerdict, type VerifyOptions } from './verify';
+import { lookupVerdict, scoreText, type LookupResult, type PublicVerdict, type VerifyOptions } from './verify';
 
 export const VERSION = '0.2.0';
 export const CONFIG_FILENAME = 'clearrun.config.json';
@@ -41,20 +41,26 @@ Usage:
   clearrun login                        Open the API key page and save a key
   clearrun logout                       Remove the saved key
   clearrun whoami                       Show whether a key is configured (masked)
-  clearrun verify <file> [<file> ...]   Score one or more files
-  clearrun verify --text "..."          Score inline text
-  clearrun verify                       Score the "paths" in clearrun.config.json
+  clearrun score <file> [<file> ...]    Score one or more files
+  clearrun score --text "..."           Score inline text
+  clearrun score                        Score the "paths" in clearrun.config.json
+  clearrun verify <verdictId>           Look up a verdict id (does not score)
   clearrun --help                       Show this help
   clearrun --version                    Show the CLI version
 
 Options:
-  --api-key <key>      API key. Overrides CLEARRUN_API_KEY and saved config
+  --api-key <key>      API key for scoring. Overrides CLEARRUN_API_KEY and saved config
   --base-url <url>     API base URL (default: https://api.clearrun.net)
   --config <path>      Path to a project config file (default: ./clearrun.config.json)
-  --threshold <0-100>  Exit 1 if any input scores below this (overrides config)
-  --json               Output raw JSON instead of formatted text
+  --threshold <0-100>  With score, exit 1 if any input scores below this (overrides config)
+  --json               Output JSON instead of formatted text
 
-Key lookup order:
+clearrun score sends text to POST /api/score and needs an API key.
+clearrun verify looks up GET /api/verify/<verdictId>. It does not spend a
+score call and does not need an API key.
+A null score fails a score run only when a threshold is set.
+
+Key lookup order (score):
   1. --api-key
   2. CLEARRUN_API_KEY
   3. ~/.config/clearrun/config.json from clearrun login
@@ -74,15 +80,16 @@ Config file (clearrun.config.json), every field optional:
   Prefer CLEARRUN_API_KEY or clearrun login over apiKey in the project file.
 
 Exit codes:
-  0  every input scored and passed threshold and maxIssues
-  1  an input failed threshold or maxIssues, a request failed, or bad usage
+  0  score: every input passed. verify: every id verified
+  1  an input failed the gate, an id did not verify, a request failed, or bad usage
 
 Examples:
   npx @clearrun/cli login
-  clearrun verify response.txt
-  clearrun verify --text "The capital of France is Paris."
-  clearrun verify response.txt --json
-  clearrun verify --config ci/clearrun.config.json --threshold 75
+  clearrun score response.txt
+  clearrun score --text "The capital of France is Paris."
+  clearrun score response.txt --json
+  clearrun score --config ci/clearrun.config.json --threshold 75
+  clearrun verify VERDICT_ID
 `.trim();
 
 export class CliUsageError extends Error {
@@ -93,7 +100,7 @@ export class CliUsageError extends Error {
 }
 
 export interface CliOptions {
-  command?: 'verify' | 'login' | 'logout' | 'whoami';
+  command?: 'score' | 'verify' | 'login' | 'logout' | 'whoami';
   help: boolean;
   version: boolean;
   files: string[];
@@ -156,7 +163,7 @@ export function parseArgs(args: string[]): CliOptions {
         opts.help = true;
         continue;
       }
-      if (arg === 'verify' || arg === 'login' || arg === 'logout' || arg === 'whoami') {
+      if (arg === 'score' || arg === 'verify' || arg === 'login' || arg === 'logout' || arg === 'whoami') {
         opts.command = arg;
         continue;
       }
@@ -261,7 +268,10 @@ export function gateFailures(verdict: PublicVerdict, gate: Gate): string[] {
 export interface RunDeps {
   cwd?: string;
   env?: Record<string, string | undefined>;
-  verify?: (text: string, options?: VerifyOptions) => Promise<PublicVerdict>;
+  /** Scores text through POST /api/score. Tests pass their own function. */
+  score?: (text: string, options?: VerifyOptions) => Promise<PublicVerdict>;
+  /** Looks up a verdict id through GET /api/verify/{id}. Tests pass their own function. */
+  lookup?: (verdictId: string, options?: VerifyOptions) => Promise<LookupResult>;
   stdout?: (line: string) => void;
   stderr?: (line: string) => void;
   /** Opens the API key page. Tests pass their own function. Defaults to the system browser. */
@@ -323,19 +333,163 @@ function projectKeyQuiet(cwd: string, configPath?: string): string {
   }
 }
 
+type Write = (line: string) => void;
+
+function emitUsage(message: string, json: boolean, out: Write, err: Write): number {
+  if (json) out(JSON.stringify({ passed: false, error: message }, null, 2));
+  err(message);
+  if (!json) err('Run "clearrun --help" for usage.');
+  return 1;
+}
+
+function emitFailure(message: string, json: boolean, out: Write, err: Write): number {
+  if (json) out(JSON.stringify({ passed: false, error: message }, null, 2));
+  err(message);
+  return 1;
+}
+
+interface LookupRow {
+  verdictId: string;
+  verified: boolean;
+  passed: boolean;
+  verdict?: PublicVerdict;
+  error?: string;
+}
+
+function scoreJsonRow(r: Result): Record<string, unknown> {
+  return {
+    input: r.input,
+    passed: !r.error && r.failures.length === 0,
+    ...(r.verdict ? { verdict: r.verdict } : {}),
+    ...(r.error ? { error: r.error } : {}),
+    ...(r.failures.length ? { failures: r.failures } : {}),
+  };
+}
+
+function writeScoreJson(results: Result[], out: Write): void {
+  const rows = results.map(scoreJsonRow);
+  const passed = rows.length > 0 && rows.every((row) => row.passed === true);
+  out(JSON.stringify({ passed, results: rows }, null, 2));
+}
+
+async function runLookup(
+  opts: CliOptions,
+  loaded: LoadedConfig,
+  deps: RunDeps,
+  cwd: string,
+  out: Write,
+  err: Write
+): Promise<number> {
+  if (opts.text !== undefined) {
+    throw new CliUsageError(
+      'clearrun verify looks up a verdict id. It does not score text. Use clearrun score --text "..." to score text.'
+    );
+  }
+  if (opts.threshold !== undefined) {
+    throw new CliUsageError(
+      'clearrun verify does not score text, so --threshold does not apply. Use clearrun score --threshold <0-100>.'
+    );
+  }
+  if (opts.files.length === 0) {
+    throw new CliUsageError(
+      'clearrun verify needs a verdict id. Example: clearrun verify <verdictId>. To score text, use clearrun score.'
+    );
+  }
+  for (const file of opts.files) {
+    if (existsSync(resolve(cwd, file))) {
+      throw new CliUsageError(
+        `${file} is a file or directory. clearrun verify looks up a verdict id and does not score text. To score it, run: clearrun score ${file}`
+      );
+    }
+  }
+
+  const lookupFn =
+    deps.lookup ??
+    ((verdictId: string, options?: VerifyOptions) =>
+      lookupVerdict(verdictId, { ...options, fetch: options?.fetch ?? deps.fetch }));
+  const baseUrl = opts.baseUrl ?? loaded.config.baseUrl;
+  const lookupOptions: VerifyOptions = {};
+  if (baseUrl) lookupOptions.baseUrl = baseUrl;
+
+  const results: LookupRow[] = [];
+  for (const verdictId of opts.files) {
+    try {
+      const looked = await lookupFn(verdictId, lookupOptions);
+      results.push({
+        verdictId,
+        verified: looked.verified,
+        passed: looked.verified === true,
+        verdict: looked.verdict,
+      });
+    } catch (e: unknown) {
+      results.push({
+        verdictId,
+        verified: false,
+        passed: false,
+        error: e instanceof Error ? e.message : 'Unknown error',
+      });
+    }
+  }
+
+  const ok = results.every((row) => row.passed && !row.error);
+  if (opts.json) {
+    out(
+      JSON.stringify(
+        {
+          passed: ok,
+          results: results.map((row) => ({
+            verdictId: row.verdictId,
+            passed: row.passed,
+            verified: row.verified,
+            ...(row.verdict ? { verdict: row.verdict } : {}),
+            ...(row.error ? { error: row.error } : {}),
+          })),
+        },
+        null,
+        2
+      )
+    );
+    return ok ? 0 : 1;
+  }
+
+  const multi = results.length > 1;
+  for (const row of results) {
+    if (multi) {
+      out('');
+      out(`== ${row.verdictId}`);
+    }
+    if (row.error) {
+      err(multi ? `Error (${row.verdictId}): ${row.error}` : `Error: ${row.error}`);
+      continue;
+    }
+    out(`Verified: ${row.verified ? 'yes' : 'no'}`);
+    if (row.verdict) {
+      out('');
+      formatVerdict(row.verdict, out);
+    } else if (!row.verified) {
+      out('This verdict id did not verify.');
+    }
+  }
+  return ok ? 0 : 1;
+}
+
 /** Runs the CLI and resolves to the process exit code. Never calls process.exit. */
 export async function run(args: string[], deps: RunDeps = {}): Promise<number> {
   const cwd = deps.cwd ?? process.cwd();
   const env = deps.env ?? process.env;
-  const verifyFn = deps.verify ?? hostedVerify;
+  const scoreFn =
+    deps.score ??
+    ((text: string, options?: VerifyOptions) => scoreText(text, { ...options, fetch: options?.fetch ?? deps.fetch }));
   const out = deps.stdout ?? ((line: string) => console.log(line));
   const err = deps.stderr ?? ((line: string) => console.error(line));
 
+  let json = args.includes('--json');
   let opts: CliOptions;
   let loaded: LoadedConfig;
   let inputs: Input[];
   try {
     opts = parseArgs(args);
+    json = opts.json;
     if (opts.help || args.length === 0) {
       showFirstRunHint(authIo(env, deps, out, err, projectKeyQuiet(cwd, opts.configPath)));
       out(HELP);
@@ -356,11 +510,17 @@ export async function run(args: string[], deps: RunDeps = {}): Promise<number> {
       if (opts.command === 'logout') return logoutCommand(io);
       return whoamiCommand(io, opts.apiKey);
     }
-    if (opts.command !== 'verify') {
-      throw new CliUsageError('Missing command. Use "clearrun verify", or "clearrun login" to save an API key.');
+    if (opts.command !== 'score' && opts.command !== 'verify') {
+      throw new CliUsageError(
+        'Missing command. Use "clearrun score" to score text, or "clearrun verify <verdictId>" to look up a verdict.'
+      );
     }
 
     loaded = loadConfig(cwd, opts.configPath);
+    if (opts.command === 'verify') {
+      return await runLookup(opts, loaded, deps, cwd, out, err);
+    }
+
     if (opts.text !== undefined) {
       if (opts.files.length > 0) throw new CliUsageError('Use either --text or file paths, not both');
       inputs = [{ label: '--text', text: opts.text }];
@@ -368,18 +528,17 @@ export async function run(args: string[], deps: RunDeps = {}): Promise<number> {
       inputs = collectFiles(opts.files, cwd).map((f) => ({ label: relative(cwd, f) || f, file: f }));
     } else if (loaded.config.paths && loaded.config.paths.length > 0) {
       inputs = collectFiles(loaded.config.paths, loaded.baseDir).map((f) => ({ label: relative(cwd, f) || f, file: f }));
-      if (inputs.length === 0) throw new CliUsageError('No .txt or .md files found in config "paths"');
     } else {
       showFirstRunHint(authIo(env, deps, out, err, loaded.config.apiKey));
       out(HELP);
       return 0;
     }
-  } catch (e: unknown) {
-    if (e instanceof CliUsageError) {
-      err(e.message);
-      err('Run "clearrun --help" for usage.');
-      return 1;
+    if (inputs.length === 0) {
+      const where = opts.files.length > 0 ? opts.files.join(', ') : 'config "paths"';
+      throw new CliUsageError(`No .txt or .md files found in ${where}`);
     }
+  } catch (e: unknown) {
+    if (e instanceof CliUsageError) return emitUsage(e.message, json, out, err);
     throw e;
   }
 
@@ -389,18 +548,14 @@ export async function run(args: string[], deps: RunDeps = {}): Promise<number> {
   try {
     resolvedKey = resolveCliApiKey(env, opts.apiKey, config.apiKey);
   } catch (e: unknown) {
-    if (e instanceof CredentialFileError) {
-      err(e.message);
-      return 1;
-    }
+    if (e instanceof CredentialFileError) return emitFailure(e.message, opts.json, out, err);
     throw e;
   }
   if (!resolvedKey) {
-    err(MISSING_API_KEY_MESSAGE);
     markHintShown(env);
-    return 1;
+    return emitFailure(MISSING_API_KEY_MESSAGE, opts.json, out, err);
   }
-  const verifyOptions: VerifyOptions = {
+  const scoreOptions: VerifyOptions = {
     apiKey: resolvedKey.apiKey,
     baseUrl: opts.baseUrl ?? config.baseUrl,
   };
@@ -413,37 +568,18 @@ export async function run(args: string[], deps: RunDeps = {}): Promise<number> {
       continue;
     }
     try {
-      const verdict = await verifyFn(text, verifyOptions);
+      const verdict = await scoreFn(text, scoreOptions);
       results.push({ input: input.label, verdict, failures: gateFailures(verdict, gate) });
     } catch (e: unknown) {
       results.push({ input: input.label, error: e instanceof Error ? e.message : 'Unknown error', failures: [] });
     }
   }
 
-  const ok = results.every((r) => !r.error && r.failures.length === 0);
+  const ok = results.length > 0 && results.every((r) => !r.error && r.failures.length === 0);
   const multi = inputs.length > 1;
 
   if (opts.json) {
-    if (!multi && results[0].verdict) {
-      out(JSON.stringify(results[0].verdict, null, 2));
-    } else if (!multi) {
-      err(`Error: ${results[0].error}`);
-    } else {
-      out(
-        JSON.stringify(
-          results.map((r) => ({
-            input: r.input,
-            passed: !r.error && r.failures.length === 0,
-            ...(r.verdict ? { verdict: r.verdict } : {}),
-            ...(r.error ? { error: r.error } : {}),
-            ...(r.failures.length ? { failures: r.failures } : {}),
-          })),
-          null,
-          2
-        )
-      );
-    }
-    if (!multi && results[0].failures.length) for (const f of results[0].failures) err(`Failed: ${f}`);
+    writeScoreJson(results, out);
     return ok ? 0 : 1;
   }
 
