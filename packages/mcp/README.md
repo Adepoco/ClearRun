@@ -2,7 +2,7 @@
 
 ## Get an API key
 
-Hosted scoring needs a ClearRun account and an API key. Keys are a Pro plan or higher feature. A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+Hosted scoring needs a ClearRun account, API access, and an API key. API access is a saved setting on Pro and higher. Turning it off stops API keys from working. The free plan includes 30 monthly credits and does not include API access, so a free plan key is rejected. The API message is `API access requires a Pro plan or higher.` Training participation is saved on the same account page.
 
 1. Open [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). Sign in on that page if you need an account. That page is where you create a key.
 2. Save the key:
@@ -16,6 +16,8 @@ Or set `CLEARRUN_API_KEY` in the host config below. Do not commit a real key.
 The server checks a key passed in code, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. When no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return that same message and the process logs it to stderr at startup. `clearrun_verify` does not need a key. The key is never logged or written into a tool result.
 
 Stdio [MCP](https://modelcontextprotocol.io) server for [ClearRun](https://clearrun.net). Version 0.2.0.
+
+`clearrun_verify` in this repository looks up a verdict with no API key. npm `@clearrun/mcp@0.2.0`, published 2026-10-29, is the latest release and still requires `CLEARRUN_API_KEY` for that tool. There is no newer published version.
 
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
@@ -43,7 +45,7 @@ Or install it in a project:
 npm install @clearrun/mcp
 ```
 
-`@clearrun/mcp` 0.2.0 depends on `@clearrun/sdk` ^0.2.0 and `@clearrun/core-types` ^0.1.0.
+`@clearrun/mcp` 0.2.0 depends on `@clearrun/sdk` ^0.2.0 and `@clearrun/core-types` ^0.1.0. `npx -y @clearrun/mcp` installs that published build. Its `clearrun_verify` tool still requires `CLEARRUN_API_KEY`. The tool list below matches this repository, where verify does not read the key. Run that build from a clone.
 
 From a clone of [https://github.com/Adepoco/ClearRun](https://github.com/Adepoco/ClearRun):
 
@@ -57,7 +59,7 @@ From a clone, point the host `command` at `node` and `args` at the absolute path
 
 ## Host configuration
 
-Each block runs `npx -y @clearrun/mcp` and passes `CLEARRUN_API_KEY` in `env`. Replace `YOUR_CLEARRUN_API_KEY` with a Pro key. Prefer your host's secret input when it has one, so the key is not stored in the repo.
+Each block runs `npx -y @clearrun/mcp` and passes `CLEARRUN_API_KEY` in `env`. Replace `YOUR_CLEARRUN_API_KEY` with a Pro key that has API access turned on. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need that key. Omit `env` only when the host will call `clearrun_verify` alone. Prefer your host's secret input when it has one, so the key is not stored in the repo.
 
 ### Claude Desktop
 
@@ -170,7 +172,7 @@ A 403 from the API is returned as text, including `API access requires a Pro pla
 
 ## Credits
 
-Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 26 credits per turn. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
+Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 1 credit per turn. `clearrun_verify` spends no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
 
 ## Verify a verdict
 
@@ -184,7 +186,7 @@ That public request does not use an API key. The MCP tool `clearrun_verify` does
 
 ## Registry name
 
-`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 0.2.0, stdio, `CLEARRUN_API_KEY` as a required secret). Publishing that manifest is a separate step from this repository. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
+`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 0.2.0, stdio). `CLEARRUN_API_KEY` is a secret and `isRequired` is false: `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need it, and `clearrun_verify` does not. Publishing that manifest is a separate step from this repository, and it must wait for an npm tarball that matches this source. The published `@clearrun/mcp@0.2.0` tarball does not. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
 
 ## Links
 

@@ -2,7 +2,7 @@
 
 ## Get an API key
 
-Hosted scoring needs a ClearRun account and an API key. Keys are a Pro plan or higher feature. A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+Hosted scoring needs a ClearRun account, API access, and an API key. API access is a saved setting on Pro and higher. Turning it off stops API keys from working. The free plan includes 30 monthly credits and does not include API access, so a free plan key is rejected. The API message is `API access requires a Pro plan or higher.` Training participation is saved on the same account page.
 
 1. Open [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). Sign in on that page if you need an account. That page is where you create a key.
 2. Save the key:
@@ -21,11 +21,25 @@ The first time you run the CLI with no key configured, it prints this same hint 
 
 Command line for [ClearRun](https://clearrun.net). Version 0.2.0. `clearrun score` scores AI answer text through the hosted API at `https://api.clearrun.net`. `clearrun verify` looks up a verdict id.
 
+npm `@clearrun/cli@0.2.0`, published 2026-10-29, is the latest release and does not include that split. It still scores with `clearrun verify <file>` and exports a scoring `verify(text)`. This repository exports `scoreText` and `lookupVerdict` instead. There is no newer published version.
+
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
 This package does not contain scoring logic, weights, or formulas. It sends `responseText` to `POST /api/score` and prints the public verdict.
 
-`clearrun verify` looks up a verdict id. It does not score text. To score text, use `clearrun score`.
+`clearrun verify` looks up a verdict id. It does not score text. A file path or `--text` passed to `clearrun verify` is not scored. The command tells you to use `clearrun score`.
+
+From code, import `scoreText` and `lookupVerdict`. This repository does not export a scoring `verify()`.
+
+```ts
+import { lookupVerdict, scoreText } from '@clearrun/cli';
+
+const verdict = await scoreText('The Eiffel Tower is in Berlin.', {
+  apiKey: process.env.CLEARRUN_API_KEY,
+});
+const check = await lookupVerdict(verdict.verdictId);
+console.log(verdict.score, check.verified);
+```
 
 ## Why use it
 
@@ -48,7 +62,7 @@ Or run it without a global install:
 npx @clearrun/cli --help
 ```
 
-Node.js 18 or newer is required.
+Node.js 18 or newer is required. `npm install -g @clearrun/cli` and `npx @clearrun/cli` install 0.2.0 from npm. That publish still scores with `clearrun verify <file>`. The quickstart matches this repository. Run it from a clone.
 
 ## Quickstart
 
@@ -126,7 +140,7 @@ Printed text includes the score, grade, risk, issues, and summary. `--json` prin
 
 ## Credits
 
-Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 26 credits per turn. `clearrun score` calls score, so each input costs at least 3 credits. The CLI does not call chat. `clearrun verify` does not spend score credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
+Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 1 credit per turn. `clearrun score` calls score, so each input costs at least 3 credits. The CLI does not call chat. `clearrun verify` spends no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
 
 ## Verify a verdict
 

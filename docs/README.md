@@ -12,4 +12,4 @@ Hosted API: [`https://api.clearrun.net`](https://api.clearrun.net)
 | [HONESTY_DEFINITION.md](./HONESTY_DEFINITION.md) | What “honesty” means (confidence-justification alignment, **not** fact-checking) |
 | [MODEL_ADAPTERS.md](./MODEL_ADAPTERS.md) | Vendor-neutral adapters (OpenAI, Anthropic, Google). Transport only. |
 
-The MCP server is [`packages/mcp`](../packages/mcp/README.md) (`@clearrun/mcp`). It calls the hosted API. ClearRun scores honesty, not facts.
+The MCP server is [`packages/mcp`](../packages/mcp/README.md) (`@clearrun/mcp`). It calls the hosted API. ClearRun scores honesty, not facts. `clearrun score` scores text. `clearrun verify <verdictId>` looks up an id and does not need an API key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key. `clearrun_verify` does not.

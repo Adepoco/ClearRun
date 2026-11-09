@@ -2,7 +2,7 @@
 
 ## Get an API key
 
-Hosted scoring needs a ClearRun account and an API key. Keys are a Pro plan or higher feature. A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+Hosted scoring needs a ClearRun account, API access, and an API key. API access is a saved setting on Pro and higher. Turning it off stops API keys from working. The free plan includes 30 monthly credits and does not include API access, so a free plan key is rejected. The API message is `API access requires a Pro plan or higher.` Training participation is saved on the same account page.
 
 1. Open [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). Sign in on that page if you need an account. That page is where you create a key.
 2. Save the key on your machine:
@@ -35,6 +35,8 @@ Three ways to call it:
 
 `@clearrun/core-types` is 0.1.0. The SDK depends on it. One page for all three clients: [docs/developers.md](docs/developers.md).
 
+The version numbers in that table are the latest packages on npm, published 2026-10-29. They are also the versions in this repository. That npm publish does not include the score and verify split in this source. On npm, `@clearrun/cli@0.2.0` still scores with `clearrun verify <file>` and exports a scoring `verify()`. `@clearrun/sdk@0.2.0` does not export `createVerifyClient()`. `@clearrun/mcp@0.2.0` still requires `CLEARRUN_API_KEY` for `clearrun_verify`. The commands below match this repository. There is no newer published version.
+
 ## Access
 
 The steps are in **Get an API key** above. `createKernelClient()` throws `MissingApiKeyError` when no key is configured. The error names the keys page, `npx @clearrun/cli login`, and `CLEARRUN_API_KEY`.
@@ -57,7 +59,7 @@ cd ClearRun
 npm install
 ```
 
-Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. The npm versions above are the current published clients.
+Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. `npm install` of the versions above installs the 2026-10-29 publish. That publish still scores with `clearrun verify <file>`. The quickstart below matches this repository. Use a clone of this repository for `clearrun score` and for `clearrun verify <verdictId>`.
 
 ## Quickstart
 
@@ -115,7 +117,7 @@ Short examples for each client are in the package READMEs and in [docs/developer
 
 ## Credits
 
-Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 26 credits per turn. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
+Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 1 credit per turn. `clearrun verify` and `GET /api/verify/{id}` spend no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
 
 ## Verify a verdict
 

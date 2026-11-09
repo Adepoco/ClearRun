@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// CLI tests. No network: run() gets a stub verify().
+// CLI tests. No network: run() gets a stub score() and a stub lookup().
 // T1 contract (help, flags, config fields), T2 flows (files, dirs, gates),
 // T3 edge cases (bad config, missing values, request errors).
 

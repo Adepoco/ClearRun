@@ -390,6 +390,21 @@ test('startup logs the missing-key message and does not log a configured key', (
   assert.deepEqual(fromFile, []);
 });
 
+test('server.json does not require a key for verify, and still names the scoring tools', () => {
+  const manifest = JSON.parse(readFileSync(join(__dirname, '..', 'server.json'), 'utf8'));
+  const variable = manifest.packages[0].environmentVariables[0];
+  assert.equal(variable.name, 'CLEARRUN_API_KEY');
+  assert.equal(variable.isRequired, false);
+  assert.equal(variable.isSecret, true);
+  assert.match(variable.description, /clearrun_score/);
+  assert.match(variable.description, /clearrun_evaluate/);
+  assert.match(variable.description, /clearrun_chat/);
+  assert.match(variable.description, /clearrun_verify/);
+  assert.match(variable.description, /does not read/);
+  assert.equal(manifest.version, '0.2.0');
+  assert.equal(manifest.packages[0].version, '0.2.0');
+});
+
 test('package copy does not use an em dash', () => {
   const readme = readFileSync(join(__dirname, '..', 'README.md'), 'utf8');
   const rootReadme = readFileSync(join(__dirname, '..', '..', '..', 'README.md'), 'utf8');

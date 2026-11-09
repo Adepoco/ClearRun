@@ -58,6 +58,8 @@ Options:
 clearrun score sends text to POST /api/score and needs an API key.
 clearrun verify looks up GET /api/verify/<verdictId>. It does not spend a
 score call and does not need an API key.
+A file path or --text passed to clearrun verify is not scored. The command
+tells you to use clearrun score instead.
 A null score fails a score run only when a threshold is set.
 
 Key lookup order (score):

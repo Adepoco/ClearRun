@@ -22,8 +22,8 @@
       "environmentVariables": [
         {
           "name": "CLEARRUN_API_KEY",
-          "description": "ClearRun API key. Pro plan or higher. Free plan keys are rejected. Create one at https://api.clearrun.net/account/keys or run npx @clearrun/cli login.",
-          "isRequired": true,
+          "description": "API key for clearrun_score, clearrun_evaluate, and clearrun_chat. Those tools need it. Pro plan or higher, with API access turned on. Free plan keys are rejected. clearrun_verify does not read this variable. Create a key at https://api.clearrun.net/account/keys or run npx @clearrun/cli login.",
+          "isRequired": false,
           "isSecret": true,
           "format": "string"
         }

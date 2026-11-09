@@ -20,9 +20,11 @@ Pick one client:
 
 Shared types are [`@clearrun/core-types`](https://www.npmjs.com/package/@clearrun/core-types) 0.1.0. Node.js 18 or newer.
 
+The Published column is the latest npm release, 2026-10-29. It is also the version in this repository. That npm publish does not include the score and verify split in this source. On npm, `@clearrun/cli@0.2.0` still scores with `clearrun verify <file>` and exports a scoring `verify()`. `@clearrun/sdk@0.2.0` does not export `createVerifyClient()`. `@clearrun/mcp@0.2.0` still requires `CLEARRUN_API_KEY` for `clearrun_verify`. The commands below match this repository. There is no newer published version.
+
 ## Get an API key
 
-Hosted scoring needs a ClearRun account and an API key. Keys are a Pro plan or higher feature. A free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+Hosted scoring needs a ClearRun account, API access, and an API key. API access is a saved setting on Pro and higher. Turning it off stops API keys from working. The free plan includes 30 monthly credits and does not include API access, so a free plan key is rejected. The API message is `API access requires a Pro plan or higher.` Training participation is saved on the same account page.
 
 1. Open [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). Sign in on that page if you need an account. That page is where you create a key.
 2. Save the key:
@@ -39,17 +41,19 @@ Without a key, `createKernelClient()` throws `MissingApiKeyError`. `clearrun_sco
 
 ## Credits
 
-Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 26 credits per turn.
+Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 1 credit per turn.
 
 [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing)
 
-Those two sentences are the credit costs stated on that page. If the page changes, the page is the source. This guide does not add other credit numbers. `clearrun score` calls score, so each file or `--text` input costs at least 3 credits. `clearrun verify` does not spend those credits.
+Those two sentences are the per-call costs on that page. If the page changes, the page is the source for those costs. The free plan's 30 monthly credits are an allowance, not a per-call price. `clearrun score` calls score, so each file or `--text` input costs at least 3 credits. `clearrun verify` spends no credits.
 
 ## SDK
 
 ```bash
 npm install @clearrun/sdk
 ```
+
+`npm install @clearrun/sdk` installs 0.2.0. That publish has `score`, `evaluate`, `chat`, and `client.verify`. `createVerifyClient()` is in this repository and is not in that tarball.
 
 ```ts
 import { createKernelClient } from '@clearrun/sdk';
@@ -99,9 +103,11 @@ npx @clearrun/cli login
 clearrun score --text "The Eiffel Tower is in Berlin."
 ```
 
+`npm install -g @clearrun/cli` installs 0.2.0, which still scores with `clearrun verify <file>`. The commands in this section match this repository. Run them from a clone.
+
 `export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY` overrides the saved key.
 
-`clearrun score` scores text through `POST /api/score`. `clearrun verify <verdictId>` looks up `GET /api/verify/{verdictId}`. The lookup does not spend a score call and does not need an API key.
+`clearrun score` scores text through `POST /api/score`. `clearrun verify <verdictId>` looks up `GET /api/verify/{verdictId}`. The lookup does not spend a score call and does not need an API key. A file path or `--text` passed to `clearrun verify` is not scored. The command tells you to use `clearrun score`. From code, the CLI exports `scoreText` and `lookupVerdict`. It does not export a scoring `verify()`.
 
 ```bash
 clearrun login
@@ -134,6 +140,8 @@ Install by letting the host run:
 ```bash
 npx -y @clearrun/mcp
 ```
+
+That command installs npm 0.2.0. In that build, `clearrun_verify` still requires `CLEARRUN_API_KEY`. In this repository, `clearrun_verify` does not read the key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key in both.
 
 ### Claude Desktop
 

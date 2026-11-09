@@ -60,7 +60,8 @@ nothing else. Production uses `HostedApiClient` against `https://api.clearrun.ne
 ## 3. Hosted-API transport
 
 - **Base URL:** `https://api.clearrun.net` (`DEFAULT_API_BASE_URL`; overridable per tenant).
-- **Auth:** scoped API key sent as `Authorization: Bearer <apiKey>`. The open side holds only a
+- **Auth:** `score`, `evaluate`, and `chat` send `Authorization: Bearer <apiKey>`.
+  `GET /api/verify/{verdictId}` sends no key. The open side holds only a
   base URL + key (`HostedApiConfig`); it never imports closed code or a sibling filesystem path.
 - **Content type:** `application/json` for request and response bodies.
 - **Errors:** non-2xx return `ApiErrorBody` = `{ error, code?, details? }`.

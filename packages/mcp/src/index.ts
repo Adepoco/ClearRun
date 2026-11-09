@@ -3,7 +3,9 @@
 // Copyright (c) 2026 Adepoco / CogniVault / ClearRun
 //
 // ClearRun MCP server (stdio).
-// Usage: CLEARRUN_API_KEY=... npx @clearrun/mcp
+// Usage: npx @clearrun/mcp
+// CLEARRUN_API_KEY is required for clearrun_score, clearrun_evaluate, and clearrun_chat.
+// clearrun_verify looks up a verdict id and does not read the key.
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { MISSING_API_KEY_MESSAGE, resolveClearRunApiKey } from '@clearrun/sdk';
