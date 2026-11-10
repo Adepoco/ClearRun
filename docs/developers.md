@@ -14,13 +14,13 @@ Pick one client:
 
 | You are building | Package | Version |
 | --- | --- | --- |
-| An app, script, or service | [`@clearrun/sdk`](https://www.npmjs.com/package/@clearrun/sdk) | 0.3.0 |
-| A terminal or CI check | [`@clearrun/cli`](https://www.npmjs.com/package/@clearrun/cli) | 0.3.0 |
+| An app, script, or service | [`@clearrun/sdk`](https://www.npmjs.com/package/@clearrun/sdk) | 0.3.1 |
+| A terminal or CI check | [`@clearrun/cli`](https://www.npmjs.com/package/@clearrun/cli) | 0.3.1 |
 | A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 0.3.0 |
 
-Shared types are [`@clearrun/core-types`](https://www.npmjs.com/package/@clearrun/core-types) 0.1.0. Node.js 18 or newer.
+Shared types are [`@clearrun/core-types`](https://www.npmjs.com/package/@clearrun/core-types) 0.1.1. Node.js 18 or newer.
 
-The Version column is this repository. npm still serves 0.2.0, published 2026-10-29, until a maintainer publishes 0.3.0. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match 0.3.0.
+The Version column is this repository. npm serves `@clearrun/sdk` 0.3.0, `@clearrun/cli` 0.3.0, `@clearrun/mcp` 0.3.0, and `@clearrun/core-types` 0.1.0. This repository does not publish 0.3.1 or 0.1.1. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk` and `@clearrun/cli` here are 0.3.1. `@clearrun/mcp` is 0.3.0.
 
 ## Get an API key
 
@@ -39,7 +39,7 @@ Or set `CLEARRUN_API_KEY`. Do not commit a real key.
 
 Lookup order for the SDK and the MCP server: an explicit key, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. The CLI checks `--api-key` first, then that same order, then `apiKey` in `./clearrun.config.json`.
 
-Without a key, `createKernelClient()` throws `MissingApiKeyError`. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return that same message, and the server logs it to stderr at startup. `createVerifyClient()` and `clearrun_verify` look up a verdict id with no key. Pass `{ forceMock: true }` only for local SDK development. The mock returns schema-valid verdicts for local development. The CLI and the MCP server do not offer that mock.
+Without a key, `createKernelClient()` still returns a client. The first `score`, `evaluate`, or `chat` throws `MissingApiKeyError`. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return that same message, and the server logs it to stderr at startup. `createVerifyClient()` and `clearrun_verify` look up a verdict id with no key. Pass `{ forceMock: true }` only for local SDK development. The mock returns schema-valid verdicts for local development and does not need a key. The CLI and the MCP server do not offer that mock.
 
 ## Credits
 
@@ -55,7 +55,7 @@ Those two sentences are the per-call costs on that page. If the page changes, th
 npm install @clearrun/sdk
 ```
 
-`npm install @clearrun/sdk` still installs 0.2.0 until 0.3.0 is published. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. `createVerifyClient()` is in 0.3.0.
+`npm install @clearrun/sdk` installs 0.3.0. This repository is 0.3.1 and is not published yet. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. `createVerifyClient()` is in 0.3.0 and later. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
 
 ```ts
 import { createKernelClient } from '@clearrun/sdk';
@@ -86,12 +86,12 @@ console.log(scored.verdict.score, chat.responseText, check.verified);
 
 | Method | HTTP | What you send |
 | --- | --- | --- |
-| `score` | `POST /api/score` | `responseText`, optional `modelId` |
-| `evaluate` | `POST /api/evaluate` | `responseText`, optional `prompt`, `modelId`, `sessionId` |
-| `chat` | `POST /api/chat` | `message`, optional `modelId`, `sessionId` |
+| `score` | `POST /api/score` | `responseText`, optional `modelId`. The response includes `receipt` when the API sends one. |
+| `evaluate` | `POST /api/evaluate` | `responseText`, optional `prompt`, `modelId`, `sessionId`. The response includes `receipt` when the API sends one. |
+| `chat` | `POST /api/chat` | `message`, optional `modelId`, `sessionId`, and `context` (earlier turns with `role` and `content`) |
 | `verify` | `GET /api/verify/{verdictId}` | `verdictId` |
 
-Auth on score, evaluate, and chat is `Authorization: Bearer <apiKey>`. `verify` does not send the key. `createKernelClient()` still requires a key for scoring, unless you opted into the mock. `createVerifyClient()` looks up a verdict id with no key. A non-2xx response throws `HostedApiError`.
+Auth on score, evaluate, and chat is `Authorization: Bearer <apiKey>`. `verify` does not send the key. Scoring still requires a key, unless you opted into the mock. Constructing the client does not. `createVerifyClient()` looks up a verdict id with no key. A non-2xx response throws `HostedApiError`. On 429, `retryAfter` is seconds from the body or the `Retry-After` header. On 402, `creditsNeeded` and `currentBalance` come from the body. A blocked call is code `CONTENT_BLOCKED` and message `Content blocked`.
 
 `chat` always returns `responseText`. Optional `hosted.baseUrl` replaces `https://api.clearrun.net`. Optional `hosted.timeoutMs` aborts a slow call.
 
@@ -105,7 +105,7 @@ npx @clearrun/cli login
 clearrun score --text "The Eiffel Tower is in Berlin."
 ```
 
-`npm install -g @clearrun/cli` still installs 0.2.0 until 0.3.0 is published. 0.2.0 scores with `clearrun verify <file>`. The commands in this section match 0.3.0.
+`npm install -g @clearrun/cli` installs 0.3.0. This repository is 0.3.1 and is not published yet. 0.2.0 scores with `clearrun verify <file>`. The commands in this section match 0.3.1.
 
 `export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY` overrides the saved key.
 
@@ -143,7 +143,7 @@ Install by letting the host run:
 npx -y @clearrun/mcp
 ```
 
-That command still installs npm 0.2.0 until 0.3.0 is published. In 0.2.0, `clearrun_verify` still requires `CLEARRUN_API_KEY`. In 0.3.0, `clearrun_verify` does not read the key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key in both.
+That command installs npm 0.3.0. In 0.2.0, `clearrun_verify` still requires `CLEARRUN_API_KEY`. In 0.3.0, `clearrun_verify` does not read the key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key in both.
 
 ### Claude Desktop
 
@@ -266,7 +266,7 @@ The shared object is a `Verdict`. Shape: [schema/verdict.schema.json](../schema/
 | `verdictId` | Id for `GET /api/verify/{verdictId}`. |
 | `signature` | Detached signature from the hosted service, when the API sends one. Clients verify. They do not sign. |
 
-`scoringVersion` is an opaque tag. It is not a formula. The CLI prints a smaller public view: score, grade, risk, issues, summary, verdict id, timestamp, and signature.
+`scoringVersion` is an opaque tag. It is not a formula. Schema 1.1.0 public verify and free score responses may omit `scoringVersion`, `failureCategories`, `confidenceInterval`, `componentSignals`, `issues`, and `signalsSalt`. A missing field is not an error. The CLI prints a field only when the API sent it.
 
 ## Links
 

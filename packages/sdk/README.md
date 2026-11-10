@@ -15,9 +15,9 @@ npx @clearrun/cli login
 
 Or set `CLEARRUN_API_KEY`. Do not commit a real key.
 
-`createKernelClient()` checks an explicit `hosted.apiKey`, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. When no key is found it throws `MissingApiKeyError`. The message includes the keys page, `npx @clearrun/cli login`, and `CLEARRUN_API_KEY`.
+`createKernelClient()` checks an explicit `hosted.apiKey`, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. Constructing the client does not throw when no key is found. The first `score`, `evaluate`, or `chat` throws `MissingApiKeyError`. The message includes the keys page, `npx @clearrun/cli login`, and `CLEARRUN_API_KEY`. `verify` does not need a key. `{ forceMock: true }` or a `mock` options object still runs with no key.
 
-TypeScript client for [ClearRun](https://clearrun.net). Version 0.3.0. It depends only on `@clearrun/core-types` 0.1.0.
+TypeScript client for [ClearRun](https://clearrun.net). Version 0.3.1. It depends only on `@clearrun/core-types` 0.1.1.
 
 `createVerifyClient()` looks up a verdict id with no API key. This package does not export a function that scores text under the name `verify`. Scoring methods are `score`, `evaluate`, and `chat`. npm `@clearrun/sdk@0.2.0` (published 2026-10-29) does not export `createVerifyClient()`.
 
@@ -31,7 +31,7 @@ Call ClearRun from your own app, test suite, or service. `score` and `evaluate` 
 
 ## Access
 
-See **Get an API key** above. `createKernelClient()` throws `MissingApiKeyError` when no key is configured. It does not silently return a mock score.
+See **Get an API key** above. `createKernelClient()` does not throw when no key is configured, and it does not silently return a mock score. The first `score`, `evaluate`, or `chat` throws `MissingApiKeyError`.
 
 For local development only, pass `{ forceMock: true }` (or a `mock` options object). The mock returns schema-valid verdicts for local development.
 
@@ -41,7 +41,9 @@ For local development only, pass `{ forceMock: true }` (or a `mock` options obje
 npm install @clearrun/sdk
 ```
 
-That also installs `@clearrun/core-types`. Node.js 18 or newer is required (`fetch` is built in). This package is 0.3.0. `npm install @clearrun/sdk` still resolves to 0.2.0 until 0.3.0 is published. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. It does not export `createVerifyClient()`.
+That also installs `@clearrun/core-types`. Node.js 18 or newer is required (`fetch` is built in). This package is 0.3.1 and is not published yet. `npm install @clearrun/sdk` resolves to 0.3.0. npm `@clearrun/core-types` is 0.1.0. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. It does not export `createVerifyClient()`.
+
+A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers, so do not put that key in a browser page.
 
 ## Quickstart
 
@@ -74,24 +76,28 @@ Optional `baseUrl` overrides `https://api.clearrun.net`. Optional `timeoutMs` ab
 Score text that was already written. `POST /api/score`.
 
 ```ts
-const { verdict } = await client.score({
+const { verdict, receipt } = await client.score({
   responseText: 'The Eiffel Tower is in Berlin.',
   modelId: 'gpt-4o', // optional
 });
 ```
+
+`receipt` is set when the API sends one.
 
 ### evaluate
 
 Score an existing answer, and send the prompt that produced it when you have it. `POST /api/evaluate`.
 
 ```ts
-const { verdict } = await client.evaluate({
+const { verdict, receipt } = await client.evaluate({
   prompt: 'Where is the Eiffel Tower?',
   responseText: 'The Eiffel Tower is in Berlin.',
   modelId: 'gpt-4o', // optional
   sessionId: 'session-1', // optional
 });
 ```
+
+`receipt` is present when the API stores one. The same field is on `score`.
 
 ### chat
 
@@ -102,6 +108,7 @@ const chat = await client.chat({
   message: 'What is the capital of France?',
   modelId: 'gpt-4o', // optional
   sessionId: 'session-1', // optional
+  context: [{ role: 'user', content: 'Earlier turn.' }], // optional
 });
 
 console.log(chat.responseText, chat.verdict.score);
@@ -116,7 +123,7 @@ const check = await client.verify({ verdictId: scored.verdict.verdictId });
 console.log(check.verified, check.verdict?.score);
 ```
 
-The HTTP call does not send the API key. Constructing `createKernelClient()` still requires a key, unless you opted into the mock. To look up an id with no key, use `createVerifyClient()`:
+The HTTP call does not send the API key. Constructing `createKernelClient()` does not require a key. Scoring calls do, unless you opted into the mock. To look up an id with no key, use `createVerifyClient()`:
 
 ```ts
 import { createVerifyClient } from '@clearrun/sdk';
@@ -127,7 +134,7 @@ console.log(check.verified, check.verdict?.score);
 
 `score`, `evaluate`, and `chat` on a client with no key throw `MissingApiKeyError` and do not call the API. You can also open the URL with no client at all. See below.
 
-Errors from the API throw `HostedApiError` with `status`, `message`, and optional `code`.
+Errors from the API throw `HostedApiError` with `status`, `message`, and optional `code` and `details`. On 429, `retryAfter` is the wait in seconds, from the body or the `Retry-After` header. On 402, `creditsNeeded` and `currentBalance` come from the body. A blocked call uses code `CONTENT_BLOCKED` and message `Content blocked`. `code` is an open string.
 
 ## Credits
 
@@ -141,7 +148,7 @@ curl https://api.clearrun.net/api/verify/VERDICT_ID
 
 No API key is required for that public request. The lookup confirms the stored verdict. It does not fact-check the original answer.
 
-A verdict includes `score` (0 to 100, or null when the API cannot score), `grade`, `risk`, `failureCategories`, `summary`, `verdictId`, and a signature when the API signs it. Field meanings are locked in [docs/CONTRACT.md](https://github.com/Adepoco/ClearRun/blob/main/docs/CONTRACT.md). The formula is not part of this package.
+A verdict includes `score` (0 to 100, or null when the API cannot score), `grade`, `risk`, `summary`, and `verdictId`. `failureCategories`, `scoringVersion`, `confidenceInterval`, `componentSignals`, `issues`, and `signalsSalt` are present only when the API sends them. Schema 1.1.0 public verify and free score responses omit them. A missing field is not an error. Paid owners may also receive `componentSignals` and `signalsSalt`. Field meanings are locked in [docs/CONTRACT.md](https://github.com/Adepoco/ClearRun/blob/main/docs/CONTRACT.md). The formula is not part of this package.
 
 ## Links
 

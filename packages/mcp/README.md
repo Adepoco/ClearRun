@@ -47,7 +47,7 @@ Or install it in a project:
 npm install @clearrun/mcp
 ```
 
-`@clearrun/mcp` 0.3.0 depends on `@clearrun/sdk` ^0.3.0 and `@clearrun/core-types` ^0.1.0. `npx -y @clearrun/mcp` still installs npm 0.2.0 until 0.3.0 is published. In that 0.2.0 build, `clearrun_verify` still requires `CLEARRUN_API_KEY`. The tool list below matches 0.3.0, where verify does not read the key.
+`@clearrun/mcp` 0.3.0 depends on `@clearrun/sdk` ^0.3.0 and `@clearrun/core-types` ^0.1.0. `npx -y @clearrun/mcp` installs npm 0.3.0. In the 0.2.0 build, `clearrun_verify` still requires `CLEARRUN_API_KEY`. The tool list below matches 0.3.0, where verify does not read the key.
 
 From a clone of [https://github.com/Adepoco/ClearRun](https://github.com/Adepoco/ClearRun):
 

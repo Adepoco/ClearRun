@@ -1,10 +1,34 @@
 # Changelog
 
+## 0.3.1 (2026-11-10)
+
+`@clearrun/sdk` and `@clearrun/cli` are 0.3.1 in this repository. `@clearrun/core-types` is 0.1.1. `@clearrun/mcp` stays at 0.3.0. npm serves `@clearrun/sdk` 0.3.0, `@clearrun/cli` 0.3.0, `@clearrun/mcp` 0.3.0, and `@clearrun/core-types` 0.1.0. This repository does not publish 0.3.1 or 0.1.1.
+
+### @clearrun/sdk
+- Version 0.3.1. Depends on `@clearrun/core-types` ^0.1.1.
+- `createKernelClient()` does not throw when no key is configured. The first `score`, `evaluate`, or `chat` throws `MissingApiKeyError` with the same message. `verify` still needs no key. `{ forceMock: true }` and `mock` still run with no key.
+- `HostedApiError` keeps `status`, `message`, `code`, and `details`. On 429, `retryAfter` is seconds from the body or the `Retry-After` header. On 402, `creditsNeeded` and `currentBalance` come from the body.
+- Evaluate and score responses include `receipt` when the API sends one. The chat request includes optional `context`.
+- Error codes stay an open string. A blocked call is `code` `CONTENT_BLOCKED` and message `Content blocked`. This package does not list codes in a union.
+- The client no longer says it runs in a browser. A secret key belongs on a server or a backend proxy. The API sends no CORS headers.
+
+### @clearrun/cli
+- Version 0.3.1. Depends on `@clearrun/sdk` ^0.3.1.
+- Programmatic `scoreText` resolves a key as the explicit option, then `CLEARRUN_API_KEY`, then the user config file. `clearrun score` still checks `./clearrun.config.json` and passes that key as the option.
+
+### @clearrun/core-types
+- Version 0.1.1.
+- `EvaluateResponse` and `ScoreResponse` include optional `receipt`. `ChatRequest` includes optional `context`.
+- Schema 1.1.0 public verify and free score responses may omit `scoringVersion`, `failureCategories`, `confidenceInterval`, `componentSignals`, `issues`, and `signalsSalt`. A missing field is not a parse error. `signalsSalt` is never required. Paid owners may also receive `componentSignals` and `signalsSalt`. `clearrun verify` text and JSON omit absent fields.
+
+### @clearrun/mcp
+- Version stays 0.3.0. `clearrun_verify` and `clearrun_score` accept a schema 1.1.0 verdict that omits `scoringVersion` and `failureCategories`. This repository does not publish the package.
+
 ## 0.3.0 (2026-11-10)
 
 Breaking change for CLI users of 0.2.0. `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is now a lookup of `GET /api/verify/{verdictId}`. It does not spend a score call and does not need an API key.
 
-`@clearrun/cli`, `@clearrun/sdk`, and `@clearrun/mcp` are 0.3.0. `@clearrun/core-types`, `@clearrun/scoring`, `@clearrun/security`, and `@clearrun/vendors` stay at 0.1.0. Their sources did not change for this release, and no dependency range forces a bump. npm still serves 0.2.0 of the three clients until a maintainer publishes 0.3.0. This repository does not run that publish.
+`@clearrun/cli`, `@clearrun/sdk`, and `@clearrun/mcp` are 0.3.0. `@clearrun/core-types`, `@clearrun/scoring`, `@clearrun/security`, and `@clearrun/vendors` stay at 0.1.0. Their sources did not change for this release, and no dependency range forces a bump. npm now serves 0.3.0 of those three clients and 0.1.0 of `@clearrun/core-types`. This repository does not run that publish.
 
 ### @clearrun/cli
 - Version 0.3.0. Depends on `@clearrun/sdk` ^0.3.0.

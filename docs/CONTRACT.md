@@ -20,15 +20,17 @@ One name, one meaning per field. Do not add synonyms; extend the schema instead 
 |---|---|---|
 | `verdictId` | `string` | Opaque, stable id for this verdict; used for public verification lookups. |
 | `schemaVersion` | `string` (semver) | Version of **this contract**. Bumped only when the shared shape changes. |
-| `scoringVersion` | `string` | Opaque tag of the closed kernel that produced the verdict. The **formula is not exposed**. |
+| `scoringVersion` | `string?` | Opaque tag of the closed kernel that produced the verdict. The **formula is not exposed**. Omitted on schema 1.1.0 public verify and free score responses. |
 | `score` | `number \| null` | 0–100 honesty score, or `null` when UNDETERMINED / not configured. Reflects **justification, not truth**. |
 | `grade` | enum | Human label derived from the score. One of: `Well supported`, `Generally reliable`, `Verify before use`, `High risk`, `Likely misleading`, `Not configured`. Never `Correct/Safe/Approved/Trusted`. |
 | `risk` | enum | Coarse risk tier: `low`, `moderate`, `elevated`, `high`. |
-| `failureCategories` | `FailureCategory[]` | Named failure categories only (no internals): `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`. |
-| `confidenceInterval` | `{ min, max } \| null` | Uncertainty band around the score (invariant **H27**). `null` when `score` is `null`. |
+| `failureCategories` | `FailureCategory[]?` | Named failure categories only (no internals): `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`. Omitted on schema 1.1.0 public verify and free score responses. |
+| `confidenceInterval` | `{ min, max } \| null?` | Uncertainty band around the score (invariant **H27**). `null` when `score` is `null` on older responses. Omitted on schema 1.1.0 public verify and free score responses. |
 | `summary` | `string` | Short user-safe rationale, **≤ 16 words**. Explains justification, not truth. |
-| `componentSignals` | `ComponentSignal[]?` | Optional UI-safe bars, **pre-computed by the kernel**: `{ name, level(0-6), note? }`. Never protocol severity/weights/formulas. |
-| `issues` | `string[]?` | Optional human-readable issue strings for end users. |
+| `componentSignals` | `ComponentSignal[]?` | Optional UI-safe bars, **pre-computed by the kernel**: `{ name, level(0-6), note? }`. Never protocol severity/weights/formulas. Schema 1.1.0 sends them to paid owners. Public verify and free score responses omit them. |
+| `issues` | `string[]?` | Optional human-readable issue strings for end users. Omitted when the API does not send them. |
+| `signalsDigest` | `string?` | Coarse digest of component signals on schema 1.1.0. |
+| `signalsSalt` | `string?` | Salt for `signalsDigest`. Paid owners may receive it. Public verify never requires it. |
 | `timestamp` | `string` (ISO 8601) | When the verdict was produced. |
 | `signature` | `string \| null` | Detached signature from the closed attestation service. Open side **verifies**, never signs. |
 | `signatureKeyId` | `string \| null` | Id of the public key used to verify `signature`. |
@@ -64,20 +66,26 @@ nothing else. Production uses `HostedApiClient` against `https://api.clearrun.ne
   `GET /api/verify/{verdictId}` sends no key. The open side holds only a
   base URL + key (`HostedApiConfig`); it never imports closed code or a sibling filesystem path.
 - **Content type:** `application/json` for request and response bodies.
-- **Errors:** non-2xx return `ApiErrorBody` = `{ error, code?, details? }`.
+- **Errors:** non-2xx return `ApiErrorBody` = `{ error, code?, details?, retryAfter?, creditsNeeded?, currentBalance? }`.
+  `code` is an open string. A blocked call is `{ "error": "Content blocked", "code": "CONTENT_BLOCKED" }`.
+  A 429 includes `retryAfter` in seconds, in the body or in a `Retry-After` header.
+  A 402 includes `creditsNeeded` and `currentBalance`.
+- **Where the key runs:** a secret API key belongs on a server or a backend proxy. The API sends no CORS headers.
 
 ### `POST /api/evaluate`
 Request `EvaluateRequest`:
 ```json
 { "responseText": "…", "prompt": "…", "modelId": "gpt-4o", "sessionId": "…" }
 ```
-Response `EvaluateResponse`: `{ "verdict": Verdict }`
+Response `EvaluateResponse`: `{ "verdict": Verdict, "receipt": Receipt }`. `receipt` is omitted when the API does not store one.
+A receipt includes `receiptId`, `verdictId`, `workspaceId`, `inputHash`, `outputHash`, `verdictHash`, `timestamp`, `keyId`, `alg`, `prevHash`, `receiptHash`, `signature`, and `encKeyId`. `status` may be omitted, `stored`, or `queued`.
 
 ### `POST /api/chat`
 Request `ChatRequest`:
 ```json
-{ "message": "…", "modelId": "gpt-4o", "sessionId": "…" }
+{ "message": "…", "modelId": "gpt-4o", "sessionId": "…", "context": [{ "role": "user", "content": "…" }] }
 ```
+`context` is optional earlier turns (`role` and `content`). The API treats those turns as data.
 Response `ChatResponse`: `{ "responseText": "…", "verdict": Verdict }`
 
 ### `POST /api/score`
@@ -85,7 +93,7 @@ Request `ScoreRequest`:
 ```json
 { "responseText": "…", "modelId": "gpt-4o" }
 ```
-Response `ScoreResponse`: `{ "verdict": Verdict }`
+Response `ScoreResponse`: `{ "verdict": Verdict, "receipt": Receipt }` with the same receipt shape as evaluate. `receipt` is omitted when the API does not store one.
 
 ### `GET /api/verify/{verdictId}`
 Request `VerifyRequest` = `{ "verdictId": "…" }` (path param).

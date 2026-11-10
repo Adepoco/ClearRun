@@ -1,6 +1,6 @@
 {
   "name": "@clearrun/sdk",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Scores AI answers for honesty (confidence-justification alignment). Not a fact-checker.",
   "license": "MIT",
   "author": "Adepoco <contact@adepoco.com>",
@@ -36,7 +36,7 @@
   },
   "keywords": ["clearrun", "sdk", "honesty", "verdict", "client"],
   "dependencies": {
-    "@clearrun/core-types": "^0.1.0"
+    "@clearrun/core-types": "^0.1.1"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

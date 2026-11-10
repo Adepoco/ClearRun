@@ -18,7 +18,7 @@ import {
 } from './auth';
 import { lookupVerdict, scoreText, type LookupResult, type PublicVerdict, type VerifyOptions } from './verify';
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.3.1';
 export const CONFIG_FILENAME = 'clearrun.config.json';
 /** File types picked up when a config or CLI path is a directory. */
 export const DIRECTORY_EXTENSIONS = ['.txt', '.md', '.markdown'];
@@ -298,20 +298,25 @@ interface Result {
 }
 
 function formatVerdict(v: PublicVerdict, out: (line: string) => void): void {
-  out(`ClearRun Score: ${typeof v.score === 'number' ? v.score : 'not determined'}`);
-  out(`Grade: ${v.grade}`);
+  if (v.score === null) out('ClearRun Score: not determined');
+  else if (typeof v.score === 'number') out(`ClearRun Score: ${v.score}`);
+  if (typeof v.grade === 'string' && v.grade.length > 0) out(`Grade: ${v.grade}`);
   if (typeof v.risk === 'string' && v.risk.length > 0) {
     out(`Risk: ${v.risk.charAt(0).toUpperCase() + v.risk.slice(1)}`);
   }
-  const issues = Array.isArray(v.issues) ? v.issues : [];
-  if (issues.length === 0) {
-    out('Issues: none');
-  } else {
-    out('Issues:');
-    for (const issue of issues) out(`  * ${issue}`);
+  if (Array.isArray(v.issues)) {
+    if (v.issues.length === 0) out('Issues: none');
+    else {
+      out('Issues:');
+      for (const issue of v.issues) {
+        if (typeof issue === 'string') out(`  * ${issue}`);
+      }
+    }
   }
-  out('');
-  out(v.summary);
+  if (typeof v.summary === 'string') {
+    out('');
+    out(v.summary);
+  }
 }
 
 function authIo(env: Record<string, string | undefined>, deps: RunDeps, out: (line: string) => void, err: (line: string) => void, projectApiKey?: string): AuthIo {

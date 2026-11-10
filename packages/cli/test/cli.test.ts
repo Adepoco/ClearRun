@@ -9,6 +9,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { HELP, VERSION, CliUsageError, collectFiles, gateFailures, loadConfig, parseArgs, run } from '../src/cli';
+import { MISSING_API_KEY_MESSAGE, MissingApiKeyError } from '@clearrun/sdk';
 import { lookupVerdict, scoreText, type LookupResult, type PublicVerdict, type VerifyOptions } from '../src/verify';
 
 function verdict(score: number, issues: string[] = []): PublicVerdict {
@@ -540,7 +541,7 @@ test('scoreText posts to /api/score and lookupVerdict gets /api/verify without a
     fetch,
   });
   assert.equal(scored.score, 82);
-  assert.equal(scored.issues[0], 'Hedging missing');
+  assert.equal(scored.issues?.[0], 'Hedging missing');
   assert.equal(calls[0].method, 'POST');
   assert.equal(calls[0].url, 'https://api.example.com/api/score');
   assert.equal(calls[0].authorization, 'Bearer cr_test_key_not_a_secret');
@@ -565,4 +566,161 @@ test('lookupVerdict and scoreText reject an empty 200 without calling the id inv
     return true;
   });
   await assert.rejects(() => scoreText('hello', { apiKey: 'cr_test_key_not_a_secret', fetch }), /did not return a verdict/);
+});
+
+test('scoreText key order is option, then CLEARRUN_API_KEY, then the config file', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'clearrun-scoretext-'));
+  const configPath = join(dir, '.config', 'clearrun', 'config.json');
+  mkdirSync(join(dir, '.config', 'clearrun'), { recursive: true });
+  writeFileSync(configPath, JSON.stringify({ apiKey: 'cr_file_key_not_a_secret' }));
+
+  const seen: string[] = [];
+  const fetch = async (url: string, init?: { method?: string; headers?: Record<string, string>; body?: string }) => {
+    seen.push(init?.headers?.Authorization ?? '');
+    return { ok: true, status: 200, json: async () => ({ verdict: fullVerdict }) };
+  };
+
+  await scoreText('from-file', { baseUrl: 'https://api.example.com', env: { HOME: dir }, fetch });
+  await scoreText('from-env', {
+    baseUrl: 'https://api.example.com',
+    env: { HOME: dir, CLEARRUN_API_KEY: 'cr_env_key_not_a_secret' },
+    fetch,
+  });
+  await scoreText('from-option', {
+    baseUrl: 'https://api.example.com',
+    apiKey: 'cr_flag_key_not_a_secret',
+    env: { HOME: dir, CLEARRUN_API_KEY: 'cr_env_key_not_a_secret' },
+    fetch,
+  });
+  await scoreText('blank-option', {
+    baseUrl: 'https://api.example.com',
+    apiKey: '   ',
+    env: { HOME: dir, CLEARRUN_API_KEY: 'cr_env_key_not_a_secret' },
+    fetch,
+  });
+
+  assert.deepEqual(seen, [
+    'Bearer cr_file_key_not_a_secret',
+    'Bearer cr_env_key_not_a_secret',
+    'Bearer cr_flag_key_not_a_secret',
+    'Bearer cr_env_key_not_a_secret',
+  ]);
+
+  seen.length = 0;
+  const empty = mkdtempSync(join(tmpdir(), 'clearrun-scoretext-none-'));
+  await assert.rejects(
+    () => scoreText('missing', { baseUrl: 'https://api.example.com', env: { HOME: empty }, fetch }),
+    (err: unknown) => err instanceof MissingApiKeyError && err.message === MISSING_API_KEY_MESSAGE
+  );
+  assert.deepEqual(seen, []);
+});
+
+test('clearrun verify accepts schema 1.1.0 public, paid, and 1.0.0 legacy verdicts', async () => {
+  const publicVerdict = {
+    verdictId: 'v-public',
+    schemaVersion: '1.1.0',
+    score: 70,
+    grade: 'Generally reliable',
+    risk: 'low' as const,
+    summary: 'Confidence matches the reasoning.',
+    signature: 'sig-public',
+    signalsDigest: 'digest-public',
+    inputHash: 'hash-in',
+    outputHash: 'hash-out',
+    verdictHash: 'hash-verdict',
+    timestamp: '2026-11-10T00:00:00.000Z',
+  };
+  const paidVerdict = {
+    ...publicVerdict,
+    verdictId: 'v-paid',
+    componentSignals: [{ name: 'Evidence support', level: 4, note: 'paid owner' }],
+    signalsSalt: 'salt-example',
+  };
+  const legacyVerdict = {
+    verdictId: 'v-legacy',
+    schemaVersion: '1.0.0',
+    scoringVersion: 'ck-1.0.0',
+    score: 82,
+    grade: 'Generally reliable',
+    risk: 'low' as const,
+    failureCategories: [] as string[],
+    confidenceInterval: { min: 74, max: 90 },
+    summary: 'Confidence matches the reasoning.',
+    issues: ['Hedging missing'],
+    timestamp: '2026-01-08T00:00:00.000Z',
+    signature: 'sig-legacy',
+  };
+
+  async function verify(id: string, body: Record<string, unknown>, json: boolean) {
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    const fetch = async () => ({ ok: true, status: 200, json: async () => ({ verified: true, verdict: body }) });
+    const code = await run([...(json ? ['--json'] : []), 'verify', id], {
+      env: { HOME: mkdtempSync(join(tmpdir(), 'clearrun-verify-home-')) },
+      fetch,
+      stdout: (line) => stdout.push(line),
+      stderr: (line) => stderr.push(line),
+    });
+    return { code, out: stdout.join('\n'), err: stderr.join('\n') };
+  }
+
+  const publicText = await verify('v-public', publicVerdict, false);
+  assert.equal(publicText.code, 0);
+  assert.equal(publicText.out.includes('undefined'), false);
+  assert.equal(publicText.out.includes('signalsSalt'), false);
+  assert.equal(publicText.out.includes('Issues:'), false);
+  assert.match(publicText.out, /ClearRun Score: 70/);
+  assert.match(publicText.out, /Confidence matches the reasoning/);
+  assert.equal(publicText.err.includes('did not return a verdict'), false);
+
+  const publicJson = await verify('v-public', publicVerdict, true);
+  assert.equal(publicJson.code, 0);
+  assert.equal(publicJson.out.includes('undefined'), false);
+  const publicBody = JSON.parse(publicJson.out) as {
+    passed: boolean;
+    results: Array<{ verdict: Record<string, unknown> }>;
+  };
+  assert.equal(publicBody.passed, true);
+  assert.equal(publicBody.results[0].verdict.signalsDigest, 'digest-public');
+  assert.equal(publicBody.results[0].verdict.inputHash, 'hash-in');
+  assert.equal(Object.prototype.hasOwnProperty.call(publicBody.results[0].verdict, 'scoringVersion'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(publicBody.results[0].verdict, 'failureCategories'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(publicBody.results[0].verdict, 'signalsSalt'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(publicBody.results[0].verdict, 'issues'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(publicBody.results[0].verdict, 'componentSignals'), false);
+
+  const paidJson = await verify('v-paid', paidVerdict, true);
+  assert.equal(paidJson.code, 0);
+  assert.equal(paidJson.out.includes('undefined'), false);
+  const paidBody = JSON.parse(paidJson.out) as { results: Array<{ verdict: Record<string, unknown> }> };
+  assert.equal(paidBody.results[0].verdict.signalsSalt, 'salt-example');
+  assert.equal((paidBody.results[0].verdict.componentSignals as Array<{ name: string }>)[0].name, 'Evidence support');
+  assert.equal(Object.prototype.hasOwnProperty.call(paidBody.results[0].verdict, 'scoringVersion'), false);
+
+  const legacyJson = await verify('v-legacy', legacyVerdict, true);
+  assert.equal(legacyJson.code, 0);
+  assert.equal(legacyJson.out.includes('undefined'), false);
+  const legacyBody = JSON.parse(legacyJson.out) as { results: Array<{ verdict: Record<string, unknown> }> };
+  assert.equal(legacyBody.results[0].verdict.schemaVersion, '1.0.0');
+  assert.equal(legacyBody.results[0].verdict.scoringVersion, 'ck-1.0.0');
+  assert.deepEqual(legacyBody.results[0].verdict.failureCategories, []);
+  assert.deepEqual(legacyBody.results[0].verdict.issues, ['Hedging missing']);
+  assert.equal(Object.prototype.hasOwnProperty.call(legacyBody.results[0].verdict, 'signalsSalt'), false);
+
+  const legacyText = await verify('v-legacy', legacyVerdict, false);
+  assert.match(legacyText.out, /Issues:/);
+  assert.match(legacyText.out, /Hedging missing/);
+  assert.equal(legacyText.out.includes('undefined'), false);
+
+  const scored = await scoreText('free score', {
+    apiKey: 'cr_test_key_not_a_secret',
+    baseUrl: 'https://api.example.com',
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ verdict: publicVerdict }) }),
+  });
+  assert.equal(scored.score, 70);
+  assert.equal(scored.signalsDigest, 'digest-public');
+  assert.equal(Object.prototype.hasOwnProperty.call(scored, 'scoringVersion'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(scored, 'failureCategories'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(scored, 'signalsSalt'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(scored, 'issues'), false);
 });

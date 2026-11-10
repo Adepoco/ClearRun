@@ -240,18 +240,81 @@ test('presentApiResult does not invent a scoring version or a receipt', () => {
   assert.equal(Object.prototype.hasOwnProperty.call(body.verdict as object, 'scoringVersion'), false);
 });
 
-test('a verdict missing scoringVersion is not a successful score', async () => {
-  const verdict = { ...sampleVerdict } as Record<string, unknown>;
-  delete verdict.scoringVersion;
+test('clearrun_verify accepts schema 1.1.0 public, paid, and 1.0.0 legacy verdicts', async () => {
+  const publicVerdict = {
+    verdictId: 'v-public',
+    schemaVersion: '1.1.0',
+    score: 70,
+    grade: 'Generally reliable',
+    risk: 'low',
+    summary: 'Confidence matches the reasoning.',
+    signature: 'sig-public',
+    signalsDigest: 'digest-public',
+    timestamp: '2026-11-10T00:00:00.000Z',
+  };
+  const paidVerdict = {
+    ...publicVerdict,
+    verdictId: 'v-paid',
+    componentSignals: [{ name: 'Evidence support', level: 4 }],
+    signalsSalt: 'salt-example',
+  };
+  const legacyVerdict = { ...sampleVerdict, schemaVersion: '1.0.0' };
+  for (const [id, verdict] of [
+    ['v-public', publicVerdict],
+    ['v-paid', paidVerdict],
+    ['v-legacy', legacyVerdict],
+  ] as const) {
+    const { fetch } = stubFetch(() => ({ status: 200, body: { verified: true, verdict } }));
+    await withClient({ env: {}, fetch }, async (client) => {
+      const result = await client.callTool({ name: 'clearrun_verify', arguments: { verdictId: id } });
+      assert.notEqual(result.isError, true, id);
+      const body = JSON.parse(textOf(result)) as {
+        verified?: boolean;
+        scored?: boolean;
+        scoringVersion?: string;
+        signalsSalt?: string;
+        verdict: Record<string, unknown>;
+      };
+      assert.equal(body.verified, true);
+      assert.equal(body.scored, true);
+      assert.equal(textOf(result).includes('undefined'), false);
+      if (id === 'v-public') {
+        assert.equal(Object.prototype.hasOwnProperty.call(body.verdict, 'scoringVersion'), false);
+        assert.equal(Object.prototype.hasOwnProperty.call(body.verdict, 'failureCategories'), false);
+        assert.equal(Object.prototype.hasOwnProperty.call(body.verdict, 'signalsSalt'), false);
+        assert.equal(body.signalsSalt, undefined);
+      }
+      if (id === 'v-paid') {
+        assert.equal(body.verdict.signalsSalt, 'salt-example');
+        assert.ok(Array.isArray(body.verdict.componentSignals));
+      }
+      if (id === 'v-legacy') {
+        assert.equal(body.scoringVersion, 'ck-1.0.0');
+        assert.equal(body.verdict.scoringVersion, 'ck-1.0.0');
+      }
+    });
+  }
+});
+
+test('a free 1.1.0 score without scoringVersion is still a verdict', async () => {
+  const verdict = {
+    verdictId: 'v-free',
+    schemaVersion: '1.1.0',
+    score: 70,
+    grade: 'Generally reliable',
+    risk: 'low',
+    summary: 'Confidence matches the reasoning.',
+    signalsDigest: 'digest-public',
+  };
   const { fetch } = stubFetch(() => ({ status: 200, body: { verdict } }));
   await withClient({ apiKey: API_KEY, env: {}, fetch }, async (client) => {
     const result = await client.callTool({ name: 'clearrun_score', arguments: { responseText: 'hello' } });
-    assert.equal(result.isError, true);
-    const body = JSON.parse(textOf(result)) as { outcome: string; scored: boolean; error: string };
-    assert.equal(body.outcome, 'failed');
-    assert.equal(body.scored, false);
-    assert.equal(body.answered, false);
-    assert.match(body.error, /did not return a verdict/);
+    assert.notEqual(result.isError, true);
+    const body = JSON.parse(textOf(result)) as { outcome: string; scored: boolean; scoringVersion?: string };
+    assert.equal(body.outcome, 'scored');
+    assert.equal(body.scored, true);
+    assert.equal(Object.prototype.hasOwnProperty.call(body, 'scoringVersion'), false);
+    assert.equal(textOf(result).includes('undefined'), false);
   });
 });
 

@@ -8,14 +8,10 @@
   "required": [
     "verdictId",
     "schemaVersion",
-    "scoringVersion",
     "score",
     "grade",
     "risk",
-    "failureCategories",
-    "confidenceInterval",
-    "summary",
-    "timestamp"
+    "summary"
   ],
   "properties": {
     "verdictId": {
@@ -122,6 +118,17 @@
     "signatureAlg": {
       "type": ["string", "null"],
       "description": "Signature algorithm (e.g. 'ed25519'). Present when signature is present."
-    }
+    },
+    "signalsDigest": {
+      "type": "string",
+      "description": "Coarse digest of component signals on schema 1.1.0. Public verify can include this without the underlying signals."
+    },
+    "signalsSalt": {
+      "type": "string",
+      "description": "Salt for signalsDigest. Paid owners may receive it. Public verify does not require it."
+    },
+    "inputHash": { "type": "string" },
+    "outputHash": { "type": "string" },
+    "verdictHash": { "type": "string" }
   }
 }

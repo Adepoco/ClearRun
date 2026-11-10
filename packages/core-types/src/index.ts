@@ -72,42 +72,75 @@ export interface ComponentSignal {
 export interface Verdict {
   verdictId: string;
   schemaVersion: string;
-  /** Opaque version tag of the closed scoring kernel. The formula is not exposed. */
-  scoringVersion: string;
+  /**
+   * Opaque version tag of the closed scoring kernel. The formula is not exposed.
+   * Omitted on schema 1.1.0 public verify and free score responses.
+   */
+  scoringVersion?: string;
   /** 0-100, or null when UNDETERMINED / not configured. Reflects justification, not truth. */
   score: number | null;
   grade: VerdictGrade;
   risk: VerdictRisk;
-  failureCategories: FailureCategory[];
-  confidenceInterval: ConfidenceInterval | null;
+  /** Omitted on schema 1.1.0 public verify and free score responses. */
+  failureCategories?: FailureCategory[];
+  /** Omitted on schema 1.1.0 public verify and free score responses. Null when score is null on older responses. */
+  confidenceInterval?: ConfidenceInterval | null;
   /** Short user-safe rationale (<= 16 words). */
   summary: string;
-  /** Optional UI-safe component signals for rendering bars (kernel-provided). */
+  /**
+   * UI-safe component signals for rendering bars (kernel-provided).
+   * Present for paid owners on schema 1.1.0. Omitted on public verify and free score responses.
+   */
   componentSignals?: ComponentSignal[];
-  /** Optional human-readable issue strings for end users. */
+  /** Human-readable issue strings for end users. Omitted when the API does not send them. */
   issues?: string[];
   /** ISO 8601 timestamp of when the verdict was produced. */
-  timestamp: string;
+  timestamp?: string;
   /** Detached signature from the closed attestation service (open side only VERIFIES). */
   signature?: string | null;
   signatureKeyId?: string | null;
   signatureAlg?: string | null;
+  /** Coarse digest of component signals. Present on schema 1.1.0 public verify. */
+  signalsDigest?: string;
+  /**
+   * Salt for signalsDigest. Paid owners receive it. Public verify must not require it.
+   */
+  signalsSalt?: string;
+  inputHash?: string;
+  outputHash?: string;
+  verdictHash?: string;
 }
 
-/** Runtime guard: is a value shaped like a Verdict? Structural check only. */
+function absentOr(value: unknown, ok: boolean): boolean {
+  return value === undefined || ok;
+}
+
+/** Runtime guard: is a value shaped like a Verdict? A missing optional field is not a failure. */
 export function isVerdict(value: unknown): value is Verdict {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
+  const intervalOk =
+    v.confidenceInterval === null ||
+    (typeof v.confidenceInterval === 'object' &&
+      v.confidenceInterval !== null &&
+      typeof (v.confidenceInterval as { min?: unknown }).min === 'number' &&
+      typeof (v.confidenceInterval as { max?: unknown }).max === 'number');
   return (
     typeof v.verdictId === 'string' &&
     typeof v.schemaVersion === 'string' &&
-    typeof v.scoringVersion === 'string' &&
     (typeof v.score === 'number' || v.score === null) &&
     typeof v.grade === 'string' &&
     typeof v.risk === 'string' &&
-    Array.isArray(v.failureCategories) &&
     typeof v.summary === 'string' &&
-    typeof v.timestamp === 'string'
+    absentOr(v.scoringVersion, typeof v.scoringVersion === 'string') &&
+    absentOr(v.failureCategories, Array.isArray(v.failureCategories)) &&
+    absentOr(v.confidenceInterval, intervalOk) &&
+    absentOr(v.componentSignals, Array.isArray(v.componentSignals)) &&
+    absentOr(v.issues, Array.isArray(v.issues)) &&
+    absentOr(v.timestamp, typeof v.timestamp === 'string') &&
+    absentOr(v.signalsDigest, typeof v.signalsDigest === 'string') &&
+    absentOr(v.signalsSalt, typeof v.signalsSalt === 'string') &&
+    absentOr(v.signature, typeof v.signature === 'string' || v.signature === null)
   );
 }
 
@@ -184,10 +217,18 @@ export interface EvaluateRequest {
   sessionId?: string;
 }
 
+/** One earlier chat turn. The hosted API treats this as data, not a new instruction. */
+export interface ChatContextTurn {
+  role: string;
+  content: string;
+}
+
 export interface ChatRequest {
   message: string;
   modelId?: string;
   sessionId?: string;
+  /** Earlier turns, when the caller has them. */
+  context?: ChatContextTurn[];
 }
 
 export interface ScoreRequest {
@@ -201,12 +242,37 @@ export interface VerifyRequest {
 
 // ── Responses ─────────────────────────────────────────────────────────────
 
+/**
+ * Receipt stored with a hosted scoring call.
+ * `status` may be omitted, `stored`, or `queued`.
+ */
+export interface Receipt {
+  receiptId: string;
+  verdictId: string;
+  workspaceId: string;
+  inputHash: string;
+  outputHash: string;
+  verdictHash: string;
+  timestamp: string;
+  keyId: string;
+  alg: string;
+  prevHash: string;
+  receiptHash: string;
+  signature: string;
+  encKeyId: string;
+  status?: 'stored' | 'queued';
+}
+
 export interface EvaluateResponse {
   verdict: Verdict;
+  /** Present when the hosted API stores a receipt for this call. */
+  receipt?: Receipt;
 }
 
 export interface ScoreResponse {
   verdict: Verdict;
+  /** Present when the hosted API stores a receipt for this call. */
+  receipt?: Receipt;
 }
 
 export interface ChatResponse {
@@ -220,9 +286,18 @@ export interface VerifyResponse {
   verdict?: Verdict;
 }
 
-/** Standard error envelope returned by the hosted API on non-2xx responses. */
+/**
+ * Standard error envelope returned by the hosted API on non-2xx responses.
+ * `code` is an open string, not a closed union. One value the API sends is
+ * `CONTENT_BLOCKED`, with `error` set to `Content blocked`.
+ * A 429 may include `retryAfter` (seconds). A 402 may include `creditsNeeded`
+ * and `currentBalance`.
+ */
 export interface ApiErrorBody {
   error: string;
   code?: string;
   details?: Record<string, unknown>;
+  retryAfter?: number;
+  creditsNeeded?: number;
+  currentBalance?: number;
 }

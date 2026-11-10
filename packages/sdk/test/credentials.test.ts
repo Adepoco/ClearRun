@@ -81,12 +81,20 @@ test('key resolution order is explicit, then CLEARRUN_API_KEY, then the config f
   assert.equal(blankOption?.source, 'env');
 });
 
-test('createKernelClient uses the config file and throws MissingApiKeyError when nothing is set', () => {
+test('createKernelClient uses the config file and defers a missing key to the first call', async () => {
   const dir = home();
-  assert.throws(
-    () => createKernelClient({ env: { HOME: dir } }),
+  const calls: string[] = [];
+  const fetch: FetchLike = async (url) => {
+    calls.push(url);
+    return { ok: true, status: 200, json: async () => ({}) };
+  };
+  const missing = createKernelClient({ env: { HOME: dir }, deps: { fetch } });
+  assert.ok(missing instanceof HostedApiClient);
+  await assert.rejects(
+    () => missing.score({ responseText: 'x' }),
     (err: unknown) => err instanceof MissingApiKeyError && err.message === MISSING_API_KEY_MESSAGE
   );
+  assert.deepEqual(calls, []);
 
   const configPath = userConfigPath({ HOME: dir }) as string;
   writeCredentialFile(configPath, { apiKey: SECRET });

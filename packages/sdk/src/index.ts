@@ -10,7 +10,6 @@
 
 import type { HonestyKernelClient, HostedApiConfig, VerifyRequest, VerifyResponse } from '@clearrun/core-types';
 import {
-  MissingApiKeyError,
   resolveClearRunApiKey,
   type ResolveApiKeyOptions,
 } from './credentials';
@@ -56,8 +55,10 @@ export type {
   ComponentSignal,
   EvaluateRequest,
   EvaluateResponse,
+  ChatContextTurn,
   ChatRequest,
   ChatResponse,
+  Receipt,
   ScoreRequest,
   ScoreResponse,
   VerifyRequest,
@@ -107,10 +108,12 @@ export interface CreateKernelClientOptions {
 
 /**
  * Factory: returns a HonestyKernelClient.
- * Requires a hosted API key (`hosted.apiKey`, `CLEARRUN_API_KEY`, or the
- * CLI config file) unless the caller explicitly opts into MockKernelClient
- * via `forceMock` or `mock`. Never silently returns a mock score.
- * A missing key throws MissingApiKeyError.
+ * Resolves a hosted API key from `hosted.apiKey`, then `CLEARRUN_API_KEY`,
+ * then the CLI config file, unless the caller explicitly opts into
+ * MockKernelClient via `forceMock` or `mock`. Never silently returns a mock score.
+ * A missing key does not throw here. The first `score`, `evaluate`, or `chat`
+ * throws MissingApiKeyError. `verify` does not need a key. Mock mode does not
+ * need a key.
  */
 export function createKernelClient(options: CreateKernelClientOptions = {}): HonestyKernelClient {
   const { hosted, forceMock, mock, deps } = options;
@@ -122,11 +125,8 @@ export function createKernelClient(options: CreateKernelClientOptions = {}): Hon
     apiKey: hosted?.apiKey,
     env: options.env ?? process.env,
   });
-  if (!resolved) {
-    throw new MissingApiKeyError();
-  }
   return new HostedApiClient(
-    { baseUrl: hosted?.baseUrl, apiKey: resolved.apiKey, timeoutMs: hosted?.timeoutMs },
+    { baseUrl: hosted?.baseUrl, apiKey: resolved?.apiKey ?? '', timeoutMs: hosted?.timeoutMs },
     deps
   );
 }

@@ -21,7 +21,7 @@ Lookup order: `--api-key`, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/con
 
 The first time you run the CLI with no key configured, it prints this same hint once.
 
-Command line for [ClearRun](https://clearrun.net). Version 0.3.0. `clearrun score` scores AI answer text through the hosted API at `https://api.clearrun.net`. `clearrun verify <verdictId>` looks up a verdict id.
+Command line for [ClearRun](https://clearrun.net). Version 0.3.1. `clearrun score` scores AI answer text through the hosted API at `https://api.clearrun.net`. `clearrun verify <verdictId>` looks up a verdict id.
 
 Breaking change from 0.2.0: `clearrun verify --text` and `clearrun verify <file>` no longer score. Use `clearrun score`. `clearrun verify <verdictId>` looks up `GET /api/verify/{verdictId}` and does not need an API key. This package exports `scoreText` and `lookupVerdict`. It does not export a scoring `verify()`.
 
@@ -42,6 +42,8 @@ const verdict = await scoreText('The Eiffel Tower is in Berlin.', {
 const check = await lookupVerdict(verdict.verdictId);
 console.log(verdict.score, check.verified);
 ```
+
+`scoreText` resolves a key as the `apiKey` option, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json`. A blank option is skipped. `clearrun score` still checks `./clearrun.config.json` before it calls `scoreText`, and it passes that resolved key as `apiKey`.
 
 ## Why use it
 
@@ -64,7 +66,7 @@ Or run it without a global install:
 npx @clearrun/cli --help
 ```
 
-Node.js 18 or newer is required. This package is 0.3.0. npm still serves 0.2.0 until that version is published. In 0.2.0, `clearrun verify <file>` scores text.
+Node.js 18 or newer is required. This package is 0.3.1 and is not published yet. npm serves 0.3.0. In 0.2.0, `clearrun verify <file>` scores text.
 
 ## Quickstart
 
@@ -92,7 +94,7 @@ clearrun score --text "..."           Score inline text
 clearrun score                        Score the "paths" in clearrun.config.json
 clearrun verify <verdictId>           Look up a verdict id (does not score)
 clearrun --help                       Show help
-clearrun --version                    Show the CLI version (0.3.0)
+clearrun --version                    Show the CLI version (0.3.1)
 ```
 
 With no command, `clearrun` prints help and exits 0.

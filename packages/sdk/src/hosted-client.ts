@@ -22,7 +22,11 @@ import {
 } from '@clearrun/core-types';
 import { MissingApiKeyError } from './credentials';
 
-/** Minimal fetch signature so the client works in Node 18+, browsers, and tests. */
+/**
+ * Minimal fetch signature for Node 18+ and tests.
+ * A secret API key belongs on a server or a backend proxy.
+ * The hosted API sends no CORS headers.
+ */
 export type FetchLike = (
   input: string,
   init?: {
@@ -34,19 +38,72 @@ export type FetchLike = (
 ) => Promise<{
   ok: boolean;
   status: number;
+  headers?: { get?(name: string): string | null };
   json(): Promise<unknown>;
 }>;
+
+function finiteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
+function headerValue(headers: { get?(name: string): string | null } | undefined, name: string): string | undefined {
+  if (!headers || typeof headers.get !== 'function') return undefined;
+  const value = headers.get(name);
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+/** Seconds until retry. Body `retryAfter` wins. Otherwise the Retry-After header. */
+function retryAfterSeconds(body: ApiErrorBody, headers: { get?(name: string): string | null } | undefined): number | undefined {
+  const fromBody = finiteNumber(body.retryAfter);
+  if (fromBody !== undefined && fromBody >= 0) return fromBody;
+  const raw = headerValue(headers, 'retry-after');
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  if (/^\d+(\.\d+)?$/.test(trimmed)) {
+    const delta = Number(trimmed);
+    return Number.isFinite(delta) && delta >= 0 ? delta : undefined;
+  }
+  const when = Date.parse(trimmed);
+  if (Number.isNaN(when)) return undefined;
+  return Math.max(0, Math.ceil((when - Date.now()) / 1000));
+}
 
 export class HostedApiError extends Error {
   readonly status: number;
   readonly code?: string;
   readonly details?: Record<string, unknown>;
-  constructor(status: number, body: ApiErrorBody) {
-    super(body.error || `ClearRun API error ${status}`);
+  /** Seconds to wait. Set on 429, from the body or the Retry-After header. */
+  readonly retryAfter?: number;
+  /** Credits the refused call required. Set on 402, from the body. */
+  readonly creditsNeeded?: number;
+  /** Balance reported with a 402, from the body. */
+  readonly currentBalance?: number;
+
+  constructor(
+    status: number,
+    body: ApiErrorBody,
+    headers?: { get?(name: string): string | null }
+  ) {
+    super(body?.error || `ClearRun API error ${status}`);
     this.name = 'HostedApiError';
     this.status = status;
-    this.code = body.code;
-    this.details = body.details;
+    this.code = body?.code;
+    this.details = body?.details;
+    if (status === 429) {
+      const retryAfter = retryAfterSeconds(body ?? { error: '' }, headers);
+      if (retryAfter !== undefined) this.retryAfter = retryAfter;
+    }
+    if (status === 402 && body) {
+      const creditsNeeded = finiteNumber(body.creditsNeeded);
+      const currentBalance = finiteNumber(body.currentBalance);
+      if (creditsNeeded !== undefined) this.creditsNeeded = creditsNeeded;
+      if (currentBalance !== undefined) this.currentBalance = currentBalance;
+    }
   }
 }
 
@@ -63,7 +120,7 @@ export class HostedApiClient implements HonestyKernelClient {
 
   constructor(config: HostedApiConfig, deps: HostedClientDeps = {}) {
     this.baseUrl = (config.baseUrl ?? DEFAULT_API_BASE_URL).replace(/\/+$/, '');
-    this.apiKey = config.apiKey;
+    this.apiKey = config.apiKey ?? '';
     this.timeoutMs = config.timeoutMs;
     const g = deps.fetch ?? (globalThis as { fetch?: FetchLike }).fetch;
     if (!g) {
@@ -109,7 +166,9 @@ export class HostedApiClient implements HonestyKernelClient {
       });
       const data = (await res.json().catch(() => ({}))) as unknown;
       if (!res.ok) {
-        throw new HostedApiError(res.status, (data as ApiErrorBody) ?? { error: 'Unknown error' });
+        const body =
+          data && typeof data === 'object' ? (data as ApiErrorBody) : { error: 'Unknown error' };
+        throw new HostedApiError(res.status, body, res.headers);
       }
       return data as T;
     } finally {
@@ -117,7 +176,7 @@ export class HostedApiClient implements HonestyKernelClient {
     }
   }
 
-  evaluate(req: EvaluateRequest): Promise<EvaluateResponse> {
+  async evaluate(req: EvaluateRequest): Promise<EvaluateResponse> {
     this.assertCanScore();
     return this.request<EvaluateResponse>('POST', '/api/evaluate', req);
   }
@@ -134,7 +193,7 @@ export class HostedApiClient implements HonestyKernelClient {
     return data;
   }
 
-  score(req: ScoreRequest): Promise<ScoreResponse> {
+  async score(req: ScoreRequest): Promise<ScoreResponse> {
     this.assertCanScore();
     return this.request<ScoreResponse>('POST', '/api/score', req);
   }
