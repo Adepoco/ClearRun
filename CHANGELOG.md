@@ -2,7 +2,7 @@
 
 ## 0.3.1 (2026-11-10)
 
-`@clearrun/sdk` and `@clearrun/cli` are 0.3.1 in this repository. `@clearrun/core-types` is 0.1.1. `@clearrun/mcp` stays at 0.3.0. npm serves `@clearrun/sdk` 0.3.0, `@clearrun/cli` 0.3.0, `@clearrun/mcp` 0.3.0, and `@clearrun/core-types` 0.1.0. This repository does not publish 0.3.1 or 0.1.1.
+`@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` are 0.3.1 in this repository. `@clearrun/core-types` is 0.1.1. npm serves `@clearrun/sdk` 0.3.1, `@clearrun/cli` 0.3.1, `@clearrun/mcp` 0.3.0, and `@clearrun/core-types` 0.1.1. This repository does not publish `@clearrun/mcp` 0.3.1.
 
 ### @clearrun/sdk
 - Version 0.3.1. Depends on `@clearrun/core-types` ^0.1.1.
@@ -22,7 +22,8 @@
 - Schema 1.1.0 public verify and free score responses may omit `scoringVersion`, `failureCategories`, `confidenceInterval`, `componentSignals`, `issues`, and `signalsSalt`. A missing field is not a parse error. `signalsSalt` is never required. Paid owners may also receive `componentSignals` and `signalsSalt`. `clearrun verify` text and JSON omit absent fields.
 
 ### @clearrun/mcp
-- Version stays 0.3.0. `clearrun_verify` and `clearrun_score` accept a schema 1.1.0 verdict that omits `scoringVersion` and `failureCategories`. This repository does not publish the package.
+- Version 0.3.1. Depends on `@clearrun/sdk` ^0.3.1 and `@clearrun/core-types` ^0.1.1. `packages/mcp/server.json` version fields are 0.3.1. `mcpName` stays `io.github.adepoco/clearrun-mcp`.
+- `clearrun_score`, `clearrun_verify`, and `clearrun_chat` accept schema 1.1.0 coarse responses and coarse 1.0.0 public and free verdicts. Coarse 1.0.0 keeps `verdictId`, `schemaVersion`, `score`, `grade`, `risk`, `summary`, `timestamp`, `signature`, `signatureKeyId`, and `signatureAlg`. It omits `scoringVersion`, `failureCategories`, `confidenceInterval`, named signals, and `signalsDigest`. `presentHostedCall` still uses `isVerdict` from `@clearrun/core-types`. This repository does not publish the package.
 
 ## 0.3.0 (2026-11-10)
 

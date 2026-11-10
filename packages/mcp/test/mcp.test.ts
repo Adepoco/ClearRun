@@ -318,6 +318,123 @@ test('a free 1.1.0 score without scoringVersion is still a verdict', async () =>
   });
 });
 
+const coarse10Verdict = {
+  verdictId: 'v-coarse',
+  schemaVersion: '1.0.0',
+  score: 64,
+  grade: 'Generally reliable',
+  risk: 'moderate',
+  summary: 'Confidence matches the reasoning.',
+  timestamp: '2026-11-10T00:00:00.000Z',
+  signature: 'sig-coarse',
+  signatureKeyId: 'sig-key-1',
+  signatureAlg: 'ed25519',
+};
+
+const coarseOmitted = [
+  'scoringVersion',
+  'failureCategories',
+  'confidenceInterval',
+  'componentSignals',
+  'signalsDigest',
+] as const;
+
+function assertCoarse10(body: Record<string, unknown>, label: string): void {
+  const verdict = body.verdict as Record<string, unknown>;
+  assert.equal(body.outcome, 'scored', label);
+  assert.equal(body.scored, true, label);
+  assert.equal(body.score, 64, label);
+  assert.equal(Object.prototype.hasOwnProperty.call(body, 'scoringVersion'), false, label);
+  assert.equal(verdict.verdictId, coarse10Verdict.verdictId, label);
+  assert.equal(verdict.schemaVersion, '1.0.0', label);
+  assert.equal(verdict.score, 64, label);
+  assert.equal(verdict.grade, coarse10Verdict.grade, label);
+  assert.equal(verdict.risk, coarse10Verdict.risk, label);
+  assert.equal(verdict.summary, coarse10Verdict.summary, label);
+  assert.equal(verdict.timestamp, coarse10Verdict.timestamp, label);
+  assert.equal(verdict.signature, coarse10Verdict.signature, label);
+  assert.equal(verdict.signatureKeyId, coarse10Verdict.signatureKeyId, label);
+  assert.equal(verdict.signatureAlg, coarse10Verdict.signatureAlg, label);
+  for (const key of coarseOmitted) {
+    assert.equal(Object.prototype.hasOwnProperty.call(verdict, key), false, `${label} ${key}`);
+  }
+}
+
+test('coarse 1.0.0 public and free score and verify stay verdicts', async () => {
+  const { fetch: scoreFetch, calls: scoreCalls } = stubFetch(() => ({
+    status: 200,
+    body: { verdict: coarse10Verdict },
+  }));
+  await withClient({ apiKey: API_KEY, env: {}, fetch: scoreFetch }, async (client) => {
+    const result = await client.callTool({ name: 'clearrun_score', arguments: { responseText: 'hello' } });
+    assert.notEqual(result.isError, true);
+    const body = JSON.parse(textOf(result)) as Record<string, unknown>;
+    assertCoarse10(body, 'score');
+    assert.equal(body.answered, false);
+    assert.equal(textOf(result).includes('did not return a verdict'), false);
+    assert.equal(textOf(result).includes(API_KEY), false);
+  });
+  assert.equal(scoreCalls.length, 1);
+  assert.match(scoreCalls[0].url, /\/api\/score$/);
+
+  const { fetch: verifyFetch, calls: verifyCalls } = stubFetch(() => ({
+    status: 200,
+    body: { verified: true, verdict: coarse10Verdict },
+  }));
+  await withClient({ env: {}, fetch: verifyFetch }, async (client) => {
+    const result = await client.callTool({ name: 'clearrun_verify', arguments: { verdictId: 'v-coarse' } });
+    assert.notEqual(result.isError, true);
+    const body = JSON.parse(textOf(result)) as Record<string, unknown>;
+    assertCoarse10(body, 'verify');
+    assert.equal(body.verified, true);
+    assert.equal(body.answered, false);
+    assert.equal(textOf(result).includes('did not return a verdict'), false);
+  });
+  assert.equal(verifyCalls.length, 1);
+  assert.equal(verifyCalls[0].init.method, 'GET');
+  assert.match(verifyCalls[0].url, /\/api\/verify\/v-coarse$/);
+  assert.equal(verifyCalls[0].init.headers?.Authorization, undefined);
+});
+
+test('chat accepts a schema 1.1.0 public verdict and a coarse 1.0.0 verdict', async () => {
+  const public11 = {
+    verdictId: 'v-public',
+    schemaVersion: '1.1.0',
+    score: 70,
+    grade: 'Generally reliable',
+    risk: 'low',
+    summary: 'Confidence matches the reasoning.',
+    signature: 'sig-public',
+    signalsDigest: 'digest-public',
+    timestamp: '2026-11-10T00:00:00.000Z',
+  };
+  const cases: Array<[string, Record<string, unknown>]> = [
+    ['1.1.0 public', public11],
+    ['coarse 1.0.0', coarse10Verdict],
+  ];
+  for (const [label, verdict] of cases) {
+    const { fetch } = stubFetch(() => ({ status: 200, body: { responseText: 'Paris.', verdict } }));
+    await withClient({ apiKey: API_KEY, env: {}, fetch }, async (client) => {
+      const result = await client.callTool({ name: 'clearrun_chat', arguments: { message: 'Capital?' } });
+      assert.notEqual(result.isError, true, label);
+      const body = JSON.parse(textOf(result)) as {
+        outcome: string;
+        answered: boolean;
+        scored: boolean;
+        responseText: string;
+        error?: string;
+      };
+      assert.equal(body.outcome, 'scored', label);
+      assert.equal(body.answered, true, label);
+      assert.equal(body.scored, true, label);
+      assert.equal(body.responseText, 'Paris.', label);
+      assert.equal(body.error, undefined, label);
+      assert.equal(textOf(result).includes('no verdict'), false, label);
+      if (label === 'coarse 1.0.0') assertCoarse10(body, label);
+    });
+  }
+});
+
 test('a 200 body with nothing to read is a tool error', async () => {
   const cases: Array<[string, Record<string, unknown>, string]> = [
     ['clearrun_score', { responseText: 'hello' }, 'did not return a verdict'],
@@ -465,14 +582,18 @@ test('server.json does not require a key for verify, and still names the scoring
   assert.match(variable.description, /clearrun_chat/);
   assert.match(variable.description, /clearrun_verify/);
   assert.match(variable.description, /does not read/);
-  assert.equal(manifest.version, '0.3.0');
-  assert.equal(manifest.packages[0].version, '0.3.0');
+  assert.equal(manifest.name, 'io.github.adepoco/clearrun-mcp');
+  assert.equal(manifest.version, '0.3.1');
+  assert.equal(manifest.packages[0].version, '0.3.1');
   const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
     version: string;
+    mcpName: string;
     dependencies: Record<string, string>;
   };
-  assert.equal(pkg.version, '0.3.0');
-  assert.equal(pkg.dependencies['@clearrun/sdk'], '^0.3.0');
+  assert.equal(pkg.version, '0.3.1');
+  assert.equal(pkg.mcpName, 'io.github.adepoco/clearrun-mcp');
+  assert.equal(pkg.dependencies['@clearrun/sdk'], '^0.3.1');
+  assert.equal(pkg.dependencies['@clearrun/core-types'], '^0.1.1');
   assert.equal(SERVER_VERSION, pkg.version);
 });
 

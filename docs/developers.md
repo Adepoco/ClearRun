@@ -16,11 +16,11 @@ Pick one client:
 | --- | --- | --- |
 | An app, script, or service | [`@clearrun/sdk`](https://www.npmjs.com/package/@clearrun/sdk) | 0.3.1 |
 | A terminal or CI check | [`@clearrun/cli`](https://www.npmjs.com/package/@clearrun/cli) | 0.3.1 |
-| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 0.3.0 |
+| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 0.3.1 |
 
 Shared types are [`@clearrun/core-types`](https://www.npmjs.com/package/@clearrun/core-types) 0.1.1. Node.js 18 or newer.
 
-The Version column is this repository. npm serves `@clearrun/sdk` 0.3.0, `@clearrun/cli` 0.3.0, `@clearrun/mcp` 0.3.0, and `@clearrun/core-types` 0.1.0. This repository does not publish 0.3.1 or 0.1.1. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk` and `@clearrun/cli` here are 0.3.1. `@clearrun/mcp` is 0.3.0.
+The Version column is this repository. npm serves `@clearrun/sdk` 0.3.1, `@clearrun/cli` 0.3.1, `@clearrun/mcp` 0.3.0, and `@clearrun/core-types` 0.1.1. This repository does not publish `@clearrun/mcp` 0.3.1. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` here are 0.3.1.
 
 ## Get an API key
 
@@ -55,7 +55,7 @@ Those two sentences are the per-call costs on that page. If the page changes, th
 npm install @clearrun/sdk
 ```
 
-`npm install @clearrun/sdk` installs 0.3.0. This repository is 0.3.1 and is not published yet. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. `createVerifyClient()` is in 0.3.0 and later. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
+`npm install @clearrun/sdk` installs 0.3.1. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. `createVerifyClient()` is in 0.3.0 and later. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
 
 ```ts
 import { createKernelClient } from '@clearrun/sdk';
@@ -105,7 +105,7 @@ npx @clearrun/cli login
 clearrun score --text "The Eiffel Tower is in Berlin."
 ```
 
-`npm install -g @clearrun/cli` installs 0.3.0. This repository is 0.3.1 and is not published yet. 0.2.0 scores with `clearrun verify <file>`. The commands in this section match 0.3.1.
+`npm install -g @clearrun/cli` installs 0.3.1. 0.2.0 scores with `clearrun verify <file>`. The commands in this section match 0.3.1.
 
 `export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY` overrides the saved key.
 
@@ -135,7 +135,7 @@ Package page: [packages/cli/README.md](../packages/cli/README.md).
 
 ## MCP
 
-`@clearrun/mcp` 0.3.0 is a stdio server. It calls the hosted API through the SDK. If no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return the missing-key message and do not call the API. `clearrun_verify` looks up the public verdict id and does not need a key. The server logs the missing-key message to stderr at startup when scoring has no key. The key is not written into tool results. A key saved with `clearrun login` is used when `CLEARRUN_API_KEY` is unset.
+`@clearrun/mcp` 0.3.1 is a stdio server. It calls the hosted API through the SDK. If no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return the missing-key message and do not call the API. `clearrun_verify` looks up the public verdict id and does not need a key. The server logs the missing-key message to stderr at startup when scoring has no key. The key is not written into tool results. A key saved with `clearrun login` is used when `CLEARRUN_API_KEY` is unset.
 
 Install by letting the host run:
 
@@ -143,7 +143,7 @@ Install by letting the host run:
 npx -y @clearrun/mcp
 ```
 
-That command installs npm 0.3.0. In 0.2.0, `clearrun_verify` still requires `CLEARRUN_API_KEY`. In 0.3.0, `clearrun_verify` does not read the key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key in both.
+That command installs npm 0.3.0 until 0.3.1 is published. In 0.2.0, `clearrun_verify` still requires `CLEARRUN_API_KEY`. In 0.3.0 and 0.3.1, `clearrun_verify` does not read the key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key in both. 0.3.1 depends on `@clearrun/sdk` ^0.3.1 and `@clearrun/core-types` ^0.1.1.
 
 ### Claude Desktop
 
