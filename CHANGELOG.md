@@ -1,25 +1,34 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-11-10)
+
+Breaking change for CLI users of 0.2.0. `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is now a lookup of `GET /api/verify/{verdictId}`. It does not spend a score call and does not need an API key.
+
+`@clearrun/cli`, `@clearrun/sdk`, and `@clearrun/mcp` are 0.3.0. `@clearrun/core-types`, `@clearrun/scoring`, `@clearrun/security`, and `@clearrun/vendors` stay at 0.1.0. Their sources did not change for this release, and no dependency range forces a bump. npm still serves 0.2.0 of the three clients until a maintainer publishes 0.3.0. This repository does not run that publish.
 
 ### @clearrun/cli
+- Version 0.3.0. Depends on `@clearrun/sdk` ^0.3.0.
 - `clearrun score` scores files, directories, and `--text`. `clearrun verify <verdictId>` looks up `GET /api/verify/{verdictId}` and does not spend a score call. It does not need an API key.
+- A file path or `--text` passed to `clearrun verify` is not scored. The command tells you to use `clearrun score`. The CLI exports `scoreText` and `lookupVerdict`, not a scoring `verify()`.
 - A directory with no `.txt` or `.md` files exits 1. With `--json`, stdout is an error document.
 - `--json` uses one shape for one input and many: `{ "passed", "results" }`. Each result includes `passed`.
 - A null score fails the run only when a threshold is set.
+- The help line describes scoring how well an AI answer's confidence matches its reasoning.
 
 ### @clearrun/sdk
+- Version 0.3.0. Depends on `@clearrun/core-types` ^0.1.0.
 - `createVerifyClient()` looks up a verdict id without an API key. `score`, `evaluate`, and `chat` still require a key.
 
 ### @clearrun/mcp
+- Version 0.3.0. Depends on `@clearrun/sdk` ^0.3.0 and `@clearrun/core-types` ^0.1.0.
 - A hosted 200 body with no readable verdict is a tool error. Chat reports answered, scored, or failed. `clearrun_verify` does not require an API key.
-- `packages/mcp/server.json` no longer marks `CLEARRUN_API_KEY` required. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` still need a key. `clearrun_verify` does not read it.
+- `packages/mcp/server.json` is 0.3.0 and does not mark `CLEARRUN_API_KEY` required. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` still need a key. `clearrun_verify` does not read it.
+- Publish the npm tarball before the MCP registry manifest. The published `@clearrun/mcp@0.2.0` tarball does not match this manifest.
+- The npm tarball includes `LICENSE`, the same MIT text as the other packages. The published 0.2.0 tarball included that file. It was not in this package directory before.
 
 ### Docs
-- READMEs, the developer guide, CLI help, and the MCP manifest match the source above. A file or `--text` passed to `clearrun verify` is not scored. The CLI exports `scoreText` and `lookupVerdict`, not a scoring `verify()`.
+- READMEs, the developer guide, CLI help, and the MCP manifest match 0.3.0.
 - Per-call costs match the public pricing page: evaluate and score cost at least 3 credits, and chat costs at most 1 credit per turn. The free plan includes 30 monthly credits and does not include API access. API access on Pro and higher is a saved setting. Turning it off stops API keys from working. Training participation is saved on the same account page.
-- npm `@clearrun/cli`, `@clearrun/sdk`, and `@clearrun/mcp` remain 0.2.0, published 2026-10-29. This repository does not publish a new version. Those tarballs still score with `clearrun verify <file>`, the CLI still exports a scoring `verify()`, and MCP verify still requires a key.
-- Package versions were not bumped.
 
 ## 0.2.0 (2026-10-29)
 

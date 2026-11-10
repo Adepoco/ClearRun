@@ -1,6 +1,6 @@
 {
   "name": "@clearrun/sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Scores AI answers for honesty (confidence-justification alignment). Not a fact-checker.",
   "license": "MIT",
   "author": "Adepoco <contact@adepoco.com>",

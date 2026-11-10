@@ -15,9 +15,9 @@ Or set `CLEARRUN_API_KEY`. Do not commit a real key.
 
 `createKernelClient()` checks an explicit `hosted.apiKey`, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. When no key is found it throws `MissingApiKeyError`. The message includes the keys page, `npx @clearrun/cli login`, and `CLEARRUN_API_KEY`.
 
-TypeScript client for [ClearRun](https://clearrun.net). Version 0.2.0. It depends only on `@clearrun/core-types` 0.1.0.
+TypeScript client for [ClearRun](https://clearrun.net). Version 0.3.0. It depends only on `@clearrun/core-types` 0.1.0.
 
-`createVerifyClient()` below is in this repository. npm `@clearrun/sdk@0.2.0`, published 2026-10-29, is the latest release and does not export it. There is no newer published version. This package does not export a function that scores text under the name `verify`. Scoring methods are `score`, `evaluate`, and `chat`.
+`createVerifyClient()` looks up a verdict id with no API key. This package does not export a function that scores text under the name `verify`. Scoring methods are `score`, `evaluate`, and `chat`. npm `@clearrun/sdk@0.2.0` (published 2026-10-29) does not export `createVerifyClient()`.
 
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
@@ -39,7 +39,7 @@ For local development only, pass `{ forceMock: true }` (or a `mock` options obje
 npm install @clearrun/sdk
 ```
 
-That also installs `@clearrun/core-types`. Node.js 18 or newer is required (`fetch` is built in). `npm install @clearrun/sdk` installs 0.2.0, which already has `score`, `evaluate`, `chat`, and `client.verify`. It does not export `createVerifyClient()`. That function is in this repository.
+That also installs `@clearrun/core-types`. Node.js 18 or newer is required (`fetch` is built in). This package is 0.3.0. `npm install @clearrun/sdk` still resolves to 0.2.0 until 0.3.0 is published. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. It does not export `createVerifyClient()`.
 
 ## Quickstart
 

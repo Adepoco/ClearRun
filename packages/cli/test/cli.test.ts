@@ -93,6 +93,8 @@ test('help copy has no em dash, no mojibake and no banned claims', () => {
   assert.ok(!HELP.includes('\u2014'), 'em dash');
   assert.ok(!HELP.includes('\uFFFD'), 'replacement char');
   assert.doesNotMatch(HELP, /certified|SOC ?2|enterprise-ready/i);
+  assert.match(HELP, /Score how well an AI answer's confidence matches its reasoning/);
+  assert.doesNotMatch(HELP, /reliability|accuracy|fact-checker/i);
 });
 
 test('every flag and config field in the help is implemented', () => {

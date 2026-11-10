@@ -18,7 +18,7 @@ import {
 } from './auth';
 import { lookupVerdict, scoreText, type LookupResult, type PublicVerdict, type VerifyOptions } from './verify';
 
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0';
 export const CONFIG_FILENAME = 'clearrun.config.json';
 /** File types picked up when a config or CLI path is a directory. */
 export const DIRECTORY_EXTENSIONS = ['.txt', '.md', '.markdown'];
@@ -35,7 +35,7 @@ export interface ClearRunConfig {
 }
 
 export const HELP = `
-ClearRun CLI ${VERSION}. Score AI responses for reliability.
+ClearRun CLI ${VERSION}. Score how well an AI answer's confidence matches its reasoning.
 
 Usage:
   clearrun login                        Open the API key page and save a key

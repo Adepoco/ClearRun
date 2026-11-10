@@ -14,6 +14,7 @@ import {
   createClearRunServer,
   MISSING_KEY_MESSAGE,
   presentApiResult,
+  SERVER_VERSION,
   TOOL_NAMES,
   warnIfApiKeyMissing,
   type ClearRunMcpOptions,
@@ -401,8 +402,15 @@ test('server.json does not require a key for verify, and still names the scoring
   assert.match(variable.description, /clearrun_chat/);
   assert.match(variable.description, /clearrun_verify/);
   assert.match(variable.description, /does not read/);
-  assert.equal(manifest.version, '0.2.0');
-  assert.equal(manifest.packages[0].version, '0.2.0');
+  assert.equal(manifest.version, '0.3.0');
+  assert.equal(manifest.packages[0].version, '0.3.0');
+  const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
+    version: string;
+    dependencies: Record<string, string>;
+  };
+  assert.equal(pkg.version, '0.3.0');
+  assert.equal(pkg.dependencies['@clearrun/sdk'], '^0.3.0');
+  assert.equal(SERVER_VERSION, pkg.version);
 });
 
 test('package copy does not use an em dash', () => {

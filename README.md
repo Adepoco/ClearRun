@@ -29,13 +29,13 @@ Three ways to call it:
 
 | Package | Version | Use it when |
 | --- | --- | --- |
-| [`@clearrun/sdk`](packages/sdk/README.md) | 0.2.0 | Your own app or service should call the API. |
-| [`@clearrun/cli`](packages/cli/README.md) | 0.2.0 | You want a terminal command or a CI check. |
-| [`@clearrun/mcp`](packages/mcp/README.md) | 0.2.0 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
+| [`@clearrun/sdk`](packages/sdk/README.md) | 0.3.0 | Your own app or service should call the API. |
+| [`@clearrun/cli`](packages/cli/README.md) | 0.3.0 | You want a terminal command or a CI check. |
+| [`@clearrun/mcp`](packages/mcp/README.md) | 0.3.0 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
 
-`@clearrun/core-types` is 0.1.0. The SDK depends on it. One page for all three clients: [docs/developers.md](docs/developers.md).
+`@clearrun/core-types` is 0.1.0. The SDK depends on it. `@clearrun/scoring`, `@clearrun/security`, and `@clearrun/vendors` stay at 0.1.0. One page for all three clients: [docs/developers.md](docs/developers.md).
 
-The version numbers in that table are the latest packages on npm, published 2026-10-29. They are also the versions in this repository. That npm publish does not include the score and verify split in this source. On npm, `@clearrun/cli@0.2.0` still scores with `clearrun verify <file>` and exports a scoring `verify()`. `@clearrun/sdk@0.2.0` does not export `createVerifyClient()`. `@clearrun/mcp@0.2.0` still requires `CLEARRUN_API_KEY` for `clearrun_verify`. The commands below match this repository. There is no newer published version.
+The version numbers in that table are this repository. npm still serves 0.2.0, published 2026-10-29, until a maintainer publishes 0.3.0. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match 0.3.0.
 
 ## Access
 
@@ -59,7 +59,7 @@ cd ClearRun
 npm install
 ```
 
-Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. `npm install` of the versions above installs the 2026-10-29 publish. That publish still scores with `clearrun verify <file>`. The quickstart below matches this repository. Use a clone of this repository for `clearrun score` and for `clearrun verify <verdictId>`.
+Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. `npm install` still resolves these three packages to 0.2.0 until 0.3.0 is published. The quickstart below matches 0.3.0.
 
 ## Quickstart
 

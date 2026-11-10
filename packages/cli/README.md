@@ -19,9 +19,9 @@ Lookup order: `--api-key`, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/con
 
 The first time you run the CLI with no key configured, it prints this same hint once.
 
-Command line for [ClearRun](https://clearrun.net). Version 0.2.0. `clearrun score` scores AI answer text through the hosted API at `https://api.clearrun.net`. `clearrun verify` looks up a verdict id.
+Command line for [ClearRun](https://clearrun.net). Version 0.3.0. `clearrun score` scores AI answer text through the hosted API at `https://api.clearrun.net`. `clearrun verify <verdictId>` looks up a verdict id.
 
-npm `@clearrun/cli@0.2.0`, published 2026-10-29, is the latest release and does not include that split. It still scores with `clearrun verify <file>` and exports a scoring `verify(text)`. This repository exports `scoreText` and `lookupVerdict` instead. There is no newer published version.
+Breaking change from 0.2.0: `clearrun verify --text` and `clearrun verify <file>` no longer score. Use `clearrun score`. `clearrun verify <verdictId>` looks up `GET /api/verify/{verdictId}` and does not need an API key. This package exports `scoreText` and `lookupVerdict`. It does not export a scoring `verify()`.
 
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
@@ -62,7 +62,7 @@ Or run it without a global install:
 npx @clearrun/cli --help
 ```
 
-Node.js 18 or newer is required. `npm install -g @clearrun/cli` and `npx @clearrun/cli` install 0.2.0 from npm. That publish still scores with `clearrun verify <file>`. The quickstart matches this repository. Run it from a clone.
+Node.js 18 or newer is required. This package is 0.3.0. npm still serves 0.2.0 until that version is published. In 0.2.0, `clearrun verify <file>` scores text.
 
 ## Quickstart
 
@@ -90,7 +90,7 @@ clearrun score --text "..."           Score inline text
 clearrun score                        Score the "paths" in clearrun.config.json
 clearrun verify <verdictId>           Look up a verdict id (does not score)
 clearrun --help                       Show help
-clearrun --version                    Show the CLI version (0.2.0)
+clearrun --version                    Show the CLI version (0.3.0)
 ```
 
 With no command, `clearrun` prints help and exits 0.
