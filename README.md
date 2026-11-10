@@ -19,7 +19,7 @@ Or set the `CLEARRUN_API_KEY` environment variable. Do not commit a real key.
 
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
-You get a 0 to 100 score, a grade, named failure categories, a short summary, and a signed verdict you can look up again. The open packages in this repo are the client. The scoring engine runs as a hosted service at `https://api.clearrun.net`. It is not in this repository, and these docs do not describe its formula.
+You get a 0 to 100 score, a grade, component signals, a short summary, and a signed verdict you can look up again. The open packages in this repo are the client. The scoring engine runs as a hosted service at `https://api.clearrun.net`. It is not in this repository, and these docs do not describe its formula.
 
 Calibrated for English. Scores on other languages are outside the current validated scope.
 
@@ -31,13 +31,13 @@ Three ways to call it:
 
 | Package | Version | Use it when |
 | --- | --- | --- |
-| [`@clearrun/sdk`](packages/sdk/README.md) | 0.3.1 | Your own app or service should call the API. |
-| [`@clearrun/cli`](packages/cli/README.md) | 0.3.1 | You want a terminal command or a CI check. |
-| [`@clearrun/mcp`](packages/mcp/README.md) | 0.3.1 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
+| [`@clearrun/sdk`](packages/sdk/README.md) | 1.2.0 | Your own app or service should call the API. |
+| [`@clearrun/cli`](packages/cli/README.md) | 1.2.0 | You want a terminal command or a CI check. |
+| [`@clearrun/mcp`](packages/mcp/README.md) | 1.2.0 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
 
-`@clearrun/core-types` is 0.1.1. The SDK depends on it. `@clearrun/scoring`, `@clearrun/security`, and `@clearrun/vendors` stay at 0.1.0. One page for all three clients: [docs/developers.md](docs/developers.md).
+`@clearrun/core-types` is 1.2.0. The SDK depends on it. `@clearrun/scoring`, `@clearrun/security`, and `@clearrun/vendors` stay at 0.1.0. One page for all three clients: [docs/developers.md](docs/developers.md).
 
-The version numbers in that table are this repository. npm serves `@clearrun/sdk` 0.3.1, `@clearrun/cli` 0.3.1, `@clearrun/mcp` 0.3.0, and `@clearrun/core-types` 0.1.1. This repository does not publish `@clearrun/mcp` 0.3.1. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` here are 0.3.1.
+The version numbers in that table are this repository. After a maintainer publishes them, npm will serve 1.2.0 of `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types`. Until then npm still serves `@clearrun/sdk` 0.3.1, `@clearrun/cli` 0.3.1, `@clearrun/mcp` 0.3.1, and `@clearrun/core-types` 0.1.1. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` here are 1.2.0.
 
 ## Access
 
@@ -61,7 +61,7 @@ cd ClearRun
 npm install
 ```
 
-Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. `npm install` resolves `@clearrun/sdk` and `@clearrun/cli` to 0.3.1, `@clearrun/core-types` to 0.1.1, and `@clearrun/mcp` to 0.3.0 until a maintainer publishes 0.3.1. The quickstart below matches this repository. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
+Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. `npm install` from the registry still resolves `@clearrun/sdk` and `@clearrun/cli` to 0.3.1, `@clearrun/core-types` to 0.1.1, and `@clearrun/mcp` to 0.3.1 until a maintainer publishes 1.2.0. The quickstart below matches this repository. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
 
 ## Quickstart
 
@@ -79,7 +79,7 @@ const { verdict } = await client.evaluate({
   responseText: 'The Eiffel Tower is in Berlin.',
 });
 
-console.log(verdict.score, verdict.grade, verdict.failureCategories);
+console.log(verdict.score, verdict.grade, verdict.componentSignals);
 ```
 
 CLI:
@@ -133,7 +133,7 @@ The lookup confirms the stored verdict. It does not fact-check the original answ
 
 ## What you get back
 
-A `Verdict` (see `schema/verdict.schema.json` and [docs/CONTRACT.md](docs/CONTRACT.md)): `score` (0 to 100, or null when the API cannot score), `grade`, `risk`, `failureCategories`, `confidenceInterval`, `summary`, and an Ed25519 `signature` you can verify locally or with `GET https://api.clearrun.net/api/verify/{verdictId}`.
+A `Verdict` (see `schema/verdict.schema.json` and [docs/CONTRACT.md](docs/CONTRACT.md)): `score` (0 to 100, or null when the API cannot score), `grade`, `risk`, `componentSignals`, `summary`, and an Ed25519 `signature` you can verify locally or with `GET https://api.clearrun.net/api/verify/{verdictId}`. Paid plans receive four signals: Evidence support, Reasoning integrity, Confidence calibration, and Ambiguity handling. Free use, developer API access, and public lookups receive Evidence support and Reasoning integrity.
 
 Grades are `Well supported`, `Generally reliable`, `Verify before use`, `High risk`, `Likely misleading`, and `Not configured`. They are not labels of factual truth.
 

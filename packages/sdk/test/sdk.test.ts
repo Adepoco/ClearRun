@@ -34,12 +34,12 @@ const RISKS = ['low', 'moderate', 'elevated', 'high'];
 
 function assertValidVerdict(v: Verdict) {
   assert.equal(typeof v.verdictId, 'string');
-  assert.equal(v.schemaVersion, '1.0.0');
+  assert.ok(['1.0.0', '1.1.0', '1.2.0'].includes(String(v.schemaVersion)), String(v.schemaVersion));
   assert.equal(typeof v.scoringVersion, 'string');
   assert.ok(v.score === null || (typeof v.score === 'number' && v.score >= 0 && v.score <= 100));
   assert.ok(GRADES.includes(v.grade));
   assert.ok(RISKS.includes(v.risk));
-  assert.ok(Array.isArray(v.failureCategories));
+  assert.ok(v.failureCategories === undefined || Array.isArray(v.failureCategories));
   assert.equal(typeof v.summary, 'string');
   assert.equal(typeof v.timestamp, 'string');
 }
@@ -425,12 +425,12 @@ test('mock mode still runs without an API key', async () => {
   assertValidVerdict((await opted.evaluate({ responseText: 'local only' })).verdict);
 });
 
-test('sdk package is 0.3.1 and does not claim browser use', () => {
+test('sdk package is 1.2.0 and does not claim browser use', () => {
   const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
-  assert.equal(pkg.version, '0.3.1');
-  assert.equal(pkg.dependencies['@clearrun/core-types'], '^0.1.1');
+  assert.equal(pkg.version, '1.2.0');
+  assert.equal(pkg.dependencies['@clearrun/core-types'], '^1.2.0');
   const typesPkg = JSON.parse(readFileSync(join(__dirname, '../../core-types/package.json'), 'utf8'));
-  assert.equal(typesPkg.version, '0.1.1');
+  assert.equal(typesPkg.version, '1.2.0');
   const readme = readFileSync(join(__dirname, '../README.md'), 'utf8');
   const client = readFileSync(join(__dirname, '../src/hosted-client.ts'), 'utf8');
   assert.equal(readme.includes('\u2014'), false);

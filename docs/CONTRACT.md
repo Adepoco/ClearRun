@@ -20,16 +20,16 @@ One name, one meaning per field. Do not add synonyms; extend the schema instead 
 |---|---|---|
 | `verdictId` | `string` | Opaque, stable id for this verdict; used for public verification lookups. |
 | `schemaVersion` | `string` (semver) | Version of **this contract**. Bumped only when the shared shape changes. |
-| `scoringVersion` | `string?` | Opaque tag of the closed kernel that produced the verdict. The **formula is not exposed**. Omitted on schema 1.1.0 public verify and free score responses. |
+| `scoringVersion` | `string?` | Opaque tag of the closed kernel that produced the verdict. The **formula is not exposed**. Present for Pro, Business, and Enterprise. Omitted on free, developer, and public responses. |
 | `score` | `number \| null` | 0–100 honesty score, or `null` when UNDETERMINED / not configured. Reflects **justification, not truth**. |
 | `grade` | enum | Human label derived from the score. One of: `Well supported`, `Generally reliable`, `Verify before use`, `High risk`, `Likely misleading`, `Not configured`. Never `Correct/Safe/Approved/Trusted`. |
 | `risk` | enum | Coarse risk tier: `low`, `moderate`, `elevated`, `high`. |
-| `failureCategories` | `FailureCategory[]?` | Named failure categories only (no internals): `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`. Omitted on schema 1.1.0 public verify and free score responses. |
-| `confidenceInterval` | `{ min, max } \| null?` | Uncertainty band around the score (invariant **H27**). `null` when `score` is `null` on older responses. Omitted on schema 1.1.0 public verify and free score responses. |
+| `failureCategories` | `string[]?` | Enterprise responses only. The names are not part of this public contract. Omitted on Pro, Business, free, developer, and public responses. |
+| `confidenceInterval` | `{ min, max } \| null?` | Uncertainty band around the score (invariant **H27**). Present for Pro, Business, and Enterprise. Omitted on free, developer, and public responses. `null` when `score` is `null` on older responses. |
 | `summary` | `string` | Short user-safe rationale, **≤ 16 words**. Explains justification, not truth. |
-| `componentSignals` | `ComponentSignal[]?` | Optional UI-safe bars, **pre-computed by the kernel**: `{ name, level(0-6), note? }`. Never protocol severity/weights/formulas. Schema 1.1.0 sends them to paid owners. Public verify and free score responses omit them. |
-| `issues` | `string[]?` | Optional human-readable issue strings for end users. Omitted when the API does not send them. |
-| `signalsDigest` | `string?` | Coarse digest of component signals on schema 1.1.0. |
+| `componentSignals` | `ComponentSignal[]?` | UI-safe bars, pre-computed by the kernel: `{ name, level(0-6), note? }`. Never protocol severity, weights, or formulas. Enterprise, Pro, and Business receive all four: Evidence support, Reasoning integrity, Confidence calibration, and Ambiguity handling. Free, developer, and public responses receive Evidence support and Reasoning integrity only. |
+| `issues` | `string[]?` | Human-readable issue strings. Enterprise responses only. |
+| `signalsDigest` | `string?` | Coarse digest of the componentSignals in the same response, on schema 1.1.0 and 1.2.0. |
 | `signalsSalt` | `string?` | Salt for `signalsDigest`. Paid owners may receive it. Public verify never requires it. |
 | `timestamp` | `string` (ISO 8601) | When the verdict was produced. |
 | `signature` | `string \| null` | Detached signature from the closed attestation service. Open side **verifies**, never signs. |
@@ -106,5 +106,5 @@ operation (public-key signature check); no API key required for verification.
 
 The scoring formula, the governance layer and its aggregate findings and state-mapping
 types, severities, weights, thresholds, attestation signing keys, credit ledger, and
-hosted-SaaS internals. The kernel maps its internal findings **down to** `failureCategories`
-+ `componentSignals` at the boundary. No open package may import any of the closed types.
+hosted-SaaS internals. The kernel maps its internal findings **down to** the public `componentSignals`
+(and, for Enterprise only, `failureCategories` as opaque strings) at the boundary. No open package may import any of the closed types.

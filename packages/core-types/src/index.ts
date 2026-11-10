@@ -18,8 +18,8 @@
 // 1. VERDICT FORMAT (locked vocabulary — see docs/CONTRACT.md)
 // ============================================================================
 
-/** Version of the shared verdict contract. Keep in sync with schema/verdict.schema.json. */
-export const VERDICT_SCHEMA_VERSION = '1.0.0';
+/** Version of the hosted response contract. Legacy receipts remain 1.0.0 and 1.1.0. Keep in sync with schema/verdict.schema.json. */
+export const VERDICT_SCHEMA_VERSION = '1.2.0';
 
 /** Human-facing band label derived from the score. Never uses Correct/Safe/Approved/Trusted. */
 export type VerdictGrade =
@@ -32,17 +32,6 @@ export type VerdictGrade =
 
 /** Coarse risk tier for the evaluated response. */
 export type VerdictRisk = 'low' | 'moderate' | 'elevated' | 'high';
-
-/** Named categories of detected honesty failures (names only — no internals, weights, thresholds). */
-export type FailureCategory =
-  | 'redacted'
-  | 'redacted'
-  | 'redacted'
-  | 'redacted'
-  | 'redacted'
-  | 'redacted'
-  | 'redacted'
-  | 'redacted';
 
 /** Uncertainty band around the score (invariant H27: scores must carry uncertainty bands). */
 export interface ConfidenceInterval {
@@ -73,26 +62,29 @@ export interface Verdict {
   verdictId: string;
   schemaVersion: string;
   /**
-   * Opaque version tag of the closed scoring kernel. The formula is not exposed.
-   * Omitted on schema 1.1.0 public verify and free score responses.
+   * Opaque version tag of the closed scoring kernel. Present for Pro,
+   * Business, and Enterprise. Omitted on free, developer, and public
+   * responses. The formula is not exposed.
    */
   scoringVersion?: string;
   /** 0-100, or null when UNDETERMINED / not configured. Reflects justification, not truth. */
   score: number | null;
   grade: VerdictGrade;
   risk: VerdictRisk;
-  /** Omitted on schema 1.1.0 public verify and free score responses. */
-  failureCategories?: FailureCategory[];
-  /** Omitted on schema 1.1.0 public verify and free score responses. Null when score is null on older responses. */
+  /** Enterprise responses only. The names are not part of this package. */
+  failureCategories?: string[];
+  /** Pro, Business, and Enterprise. Omitted on free, developer, and public responses. Null when score is null on older responses. */
   confidenceInterval?: ConfidenceInterval | null;
   /** Short user-safe rationale (<= 16 words). */
   summary: string;
   /**
-   * UI-safe component signals for rendering bars (kernel-provided).
-   * Present for paid owners on schema 1.1.0. Omitted on public verify and free score responses.
+   * UI-safe component signals. Enterprise, Pro, and Business receive all four:
+   * Evidence support, Reasoning integrity, Confidence calibration, and
+   * Ambiguity handling. Free, developer, and public responses receive
+   * Evidence support and Reasoning integrity only.
    */
   componentSignals?: ComponentSignal[];
-  /** Human-readable issue strings for end users. Omitted when the API does not send them. */
+  /** Human-readable issue strings. Enterprise responses only. */
   issues?: string[];
   /** ISO 8601 timestamp of when the verdict was produced. */
   timestamp?: string;
@@ -100,7 +92,7 @@ export interface Verdict {
   signature?: string | null;
   signatureKeyId?: string | null;
   signatureAlg?: string | null;
-  /** Coarse digest of component signals. Present on schema 1.1.0 public verify. */
+  /** Coarse digest of the componentSignals in this response. Present on schema 1.1.0 and 1.2.0. */
   signalsDigest?: string;
   /**
    * Salt for signalsDigest. Paid owners receive it. Public verify must not require it.

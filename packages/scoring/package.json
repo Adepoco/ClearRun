@@ -25,7 +25,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@clearrun/core-types": "^0.1.0"
+    "@clearrun/core-types": "^1.2.0"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

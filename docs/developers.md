@@ -8,7 +8,7 @@ The clients call the hosted API at `https://api.clearrun.net`. They do not conta
 
 ## Why use it
 
-Put a check on answers your product will show, store, or act on. ClearRun reports when the confidence in an answer outruns the reasoning in that answer. You get a score, a grade, named failure categories, and a signed verdict another person can open later. ClearRun does not block, rewrite, or approve the answer.
+Put a check on answers your product will show, store, or act on. ClearRun reports when the confidence in an answer outruns the reasoning in that answer. You get a score, a grade, component signals, and a signed verdict another person can open later. ClearRun does not block, rewrite, or approve the answer.
 
 Pick one client:
 
@@ -261,12 +261,12 @@ The shared object is a `Verdict`. Shape: [schema/verdict.schema.json](../schema/
 | `score` | 0 to 100, or null when the API cannot score. Justification, not truth. |
 | `grade` | `Well supported`, `Generally reliable`, `Verify before use`, `High risk`, `Likely misleading`, or `Not configured`. |
 | `risk` | `low`, `moderate`, `elevated`, or `high`. |
-| `failureCategories` | Names only: `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`, `redacted`. |
+| `componentSignals` | Paid plans (Pro, Business, and Enterprise) receive four: Evidence support, Reasoning integrity, Confidence calibration, and Ambiguity handling. Free use, developer API access, and public lookups receive Evidence support and Reasoning integrity. |
 | `summary` | Short rationale. It explains justification, not truth. |
 | `verdictId` | Id for `GET /api/verify/{verdictId}`. |
 | `signature` | Detached signature from the hosted service, when the API sends one. Clients verify. They do not sign. |
 
-`scoringVersion` is an opaque tag. It is not a formula. Schema 1.1.0 public verify and free score responses may omit `scoringVersion`, `failureCategories`, `confidenceInterval`, `componentSignals`, `issues`, and `signalsSalt`. A missing field is not an error. The CLI prints a field only when the API sent it.
+`scoringVersion` is an opaque tag. It is not a formula. Schema 1.2.0 free, developer, and public responses include Evidence support and Reasoning integrity, and may omit `scoringVersion`, `failureCategories`, `confidenceInterval`, `issues`, and `signalsSalt`. Paid plans receive all four signals. Enterprise may also receive `failureCategories` and `issues`. The names of any enterprise-only categories are not listed here. A missing field is not an error. The CLI prints a field only when the API sent it.
 
 ## Links
 

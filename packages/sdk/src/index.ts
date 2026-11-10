@@ -50,7 +50,6 @@ export type {
   Verdict,
   VerdictGrade,
   VerdictRisk,
-  FailureCategory,
   ConfidenceInterval,
   ComponentSignal,
   EvaluateRequest,

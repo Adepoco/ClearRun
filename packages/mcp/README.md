@@ -17,7 +17,7 @@ Or set `CLEARRUN_API_KEY` in the host config below. Do not commit a real key.
 
 The server checks a key passed in code, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. When no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return that same message and the process logs it to stderr at startup. `clearrun_verify` does not need a key. The key is never logged or written into a tool result.
 
-Stdio [MCP](https://modelcontextprotocol.io) server for [ClearRun](https://clearrun.net). Version 0.3.1.
+Stdio [MCP](https://modelcontextprotocol.io) server for [ClearRun](https://clearrun.net). Version 1.2.0.
 
 `clearrun_verify` looks up a verdict with no API key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key. npm `@clearrun/mcp@0.2.0`, published 2026-10-29, still requires `CLEARRUN_API_KEY` for `clearrun_verify`.
 
@@ -27,7 +27,7 @@ The server calls the hosted API at `https://api.clearrun.net` through `@clearrun
 
 ## Why use it
 
-Use it when an assistant should check an answer before you rely on it. The tools return a 0 to 100 honesty score, a grade, named failure categories, and, when the API sends one, a signed verdict you can look up again. The same check is available in Claude Desktop, Claude Code, Cursor, and VS Code.
+Use it when an assistant should check an answer before you rely on it. The tools return a 0 to 100 honesty score, a grade, component signals, and, when the API sends one, a signed verdict you can look up again. The same check is available in Claude Desktop, Claude Code, Cursor, and VS Code.
 
 ## Access
 
@@ -188,7 +188,7 @@ That public request does not use an API key. The MCP tool `clearrun_verify` does
 
 ## Registry name
 
-`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 0.3.1, stdio). `CLEARRUN_API_KEY` is a secret and `isRequired` is false: `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need it, and `clearrun_verify` does not. Publish the npm tarball before that manifest. The published `@clearrun/mcp@0.3.0` tarball does not match it. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
+`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 1.2.0, stdio). `CLEARRUN_API_KEY` is a secret and `isRequired` is false: `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need it, and `clearrun_verify` does not. Publish the npm tarball before that manifest. The published `@clearrun/mcp@0.3.0` tarball does not match it. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
 
 ## Links
 

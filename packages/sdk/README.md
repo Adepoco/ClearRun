@@ -17,7 +17,7 @@ Or set `CLEARRUN_API_KEY`. Do not commit a real key.
 
 `createKernelClient()` checks an explicit `hosted.apiKey`, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`. Constructing the client does not throw when no key is found. The first `score`, `evaluate`, or `chat` throws `MissingApiKeyError`. The message includes the keys page, `npx @clearrun/cli login`, and `CLEARRUN_API_KEY`. `verify` does not need a key. `{ forceMock: true }` or a `mock` options object still runs with no key.
 
-TypeScript client for [ClearRun](https://clearrun.net). Version 0.3.1. It depends only on `@clearrun/core-types` 0.1.1.
+TypeScript client for [ClearRun](https://clearrun.net). Version 1.2.0. It depends only on `@clearrun/core-types` 1.2.0.
 
 `createVerifyClient()` looks up a verdict id with no API key. This package does not export a function that scores text under the name `verify`. Scoring methods are `score`, `evaluate`, and `chat`. npm `@clearrun/sdk@0.2.0` (published 2026-10-29) does not export `createVerifyClient()`.
 
@@ -27,7 +27,7 @@ ClearRun scores the honesty of an AI answer: whether the confidence it expresses
 
 ## Why use it
 
-Call ClearRun from your own app, test suite, or service. `score` and `evaluate` judge text you already have. `chat` asks the hosted API to write an answer and score it. `verify` looks up a verdict id later. You get a score, a grade, named failure categories, and a signed verdict when the API sends one.
+Call ClearRun from your own app, test suite, or service. `score` and `evaluate` judge text you already have. `chat` asks the hosted API to write an answer and score it. `verify` looks up a verdict id later. You get a score, a grade, component signals, and a signed verdict when the API sends one.
 
 ## Access
 
@@ -41,7 +41,7 @@ For local development only, pass `{ forceMock: true }` (or a `mock` options obje
 npm install @clearrun/sdk
 ```
 
-That also installs `@clearrun/core-types`. Node.js 18 or newer is required (`fetch` is built in). This package is 0.3.1 and is not published yet. `npm install @clearrun/sdk` resolves to 0.3.0. npm `@clearrun/core-types` is 0.1.0. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. It does not export `createVerifyClient()`.
+That also installs `@clearrun/core-types`. Node.js 18 or newer is required (`fetch` is built in). This package is 1.2.0 in this repository. `npm install @clearrun/sdk` still resolves to 0.3.1 until a maintainer publishes 1.2.0. npm `@clearrun/core-types` is still 0.1.1 until 1.2.0 is published. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. It does not export `createVerifyClient()`.
 
 A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers, so do not put that key in a browser page.
 
@@ -148,7 +148,7 @@ curl https://api.clearrun.net/api/verify/VERDICT_ID
 
 No API key is required for that public request. The lookup confirms the stored verdict. It does not fact-check the original answer.
 
-A verdict includes `score` (0 to 100, or null when the API cannot score), `grade`, `risk`, `summary`, and `verdictId`. `failureCategories`, `scoringVersion`, `confidenceInterval`, `componentSignals`, `issues`, and `signalsSalt` are present only when the API sends them. Schema 1.1.0 public verify and free score responses omit them. A missing field is not an error. Paid owners may also receive `componentSignals` and `signalsSalt`. Field meanings are locked in [docs/CONTRACT.md](https://github.com/Adepoco/ClearRun/blob/main/docs/CONTRACT.md). The formula is not part of this package.
+A verdict includes `score` (0 to 100, or null when the API cannot score), `grade`, `risk`, `summary`, `verdictId`, and `componentSignals`. Paid plans receive four signals: Evidence support, Reasoning integrity, Confidence calibration, and Ambiguity handling. Free use, developer API access, and public lookups receive Evidence support and Reasoning integrity. `scoringVersion`, `confidenceInterval`, `failureCategories`, `issues`, and `signalsSalt` are present only when the API sends them. A missing field is not an error. Field meanings are locked in [docs/CONTRACT.md](https://github.com/Adepoco/ClearRun/blob/main/docs/CONTRACT.md). The formula is not part of this package.
 
 ## Links
 

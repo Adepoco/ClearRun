@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.2.0 (2026-11-10)
+
+`@clearrun/core-types`, `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` are 1.2.0 in this repository. The shared contract is schema 1.2.0. npm still serves `@clearrun/sdk` 0.3.1, `@clearrun/cli` 0.3.1, `@clearrun/mcp` 0.3.1, and `@clearrun/core-types` 0.1.1 until a maintainer publishes 1.2.0.
+
+This is a breaking type change. `FailureCategory` is removed from `@clearrun/core-types` and is no longer re-exported from `@clearrun/sdk`. The public contract documents component signals, not a named category list.
+
+### @clearrun/core-types
+- Version 1.2.0. `VERDICT_SCHEMA_VERSION` is `1.2.0`.
+- `failureCategories` is an optional `string[]` and is documented as Enterprise-only. The category names are not part of this package.
+- `componentSignals`: Enterprise, Pro, and Business receive Evidence support, Reasoning integrity, Confidence calibration, and Ambiguity handling. Free use, developer API access, and public lookups receive Evidence support and Reasoning integrity.
+- `issues` is documented as Enterprise-only. `scoringVersion` and `confidenceInterval` are documented as present for Pro, Business, and Enterprise.
+
+### @clearrun/sdk
+- Version 1.2.0. Depends on `@clearrun/core-types` ^1.2.0.
+- The mock client returns schema 1.2.0 verdicts with the four paid signals and does not set `failureCategories`.
+
+### @clearrun/cli
+- Version 1.2.0. Depends on `@clearrun/sdk` ^1.2.0.
+- `clearrun verify` still prints `failureCategories` when a response includes that field, without naming the values in this package.
+
+### @clearrun/mcp
+- Version 1.2.0. Depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0. `packages/mcp/server.json` version fields are 1.2.0. This repository does not publish the package.
+
+
 ## 0.3.1 (2026-11-10)
 
 `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` are 0.3.1 in this repository. `@clearrun/core-types` is 0.1.1. npm serves `@clearrun/sdk` 0.3.1, `@clearrun/cli` 0.3.1, `@clearrun/mcp` 0.3.0, and `@clearrun/core-types` 0.1.1. This repository does not publish `@clearrun/mcp` 0.3.1.
