@@ -2,7 +2,7 @@
 
 ClearRun scores the honesty of an AI answer: whether the confidence it expresses is backed by its reasoning. **It is not a fact-checker.** A high score means the confidence matches the justification. It does not mean the answer is true.
 
-This page is the adoption guide for the three public clients. It is written so it can later live at `clearrun.net/developers`.
+This page is the adoption guide for the three public clients. The live developer page is [https://api.clearrun.net/developers](https://api.clearrun.net/developers).
 
 The clients call the hosted API at `https://api.clearrun.net`. They do not contain the scoring engine, its weights, or its formula. Source: [github.com/Adepoco/ClearRun](https://github.com/Adepoco/ClearRun).
 
@@ -14,17 +14,17 @@ Pick one client:
 
 | You are building | Package | Version |
 | --- | --- | --- |
-| An app, script, or service | [`@clearrun/sdk`](https://www.npmjs.com/package/@clearrun/sdk) | 0.3.1 |
-| A terminal or CI check | [`@clearrun/cli`](https://www.npmjs.com/package/@clearrun/cli) | 0.3.1 |
-| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 0.3.1 |
+| An app, script, or service | [`@clearrun/sdk`](https://www.npmjs.com/package/@clearrun/sdk) | 1.2.0 |
+| A terminal or CI check | [`@clearrun/cli`](https://www.npmjs.com/package/@clearrun/cli) | 1.2.0 |
+| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 1.2.0 |
 
-Shared types are [`@clearrun/core-types`](https://www.npmjs.com/package/@clearrun/core-types) 0.1.1. Node.js 18 or newer.
+Shared types are [`@clearrun/core-types`](https://www.npmjs.com/package/@clearrun/core-types) 1.2.0. Node.js 18 or newer.
 
-The Version column is this repository. npm serves `@clearrun/sdk` 0.3.1, `@clearrun/cli` 0.3.1, `@clearrun/mcp` 0.3.0, and `@clearrun/core-types` 0.1.1. This repository does not publish `@clearrun/mcp` 0.3.1. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` here are 0.3.1.
+npm serves 1.2.0 of `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types`. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match 1.2.0.
 
 ## Get an API key
 
-Hosted scoring needs a ClearRun account, API access, and an API key. API access is a saved setting on Pro and higher. Turning it off stops API keys from working. The free plan includes 30 monthly credits and does not include API access, so a free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+A signed-in free account with a verified email can create one developer key at [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). The full key is shown once and starts with `crun_`. It calls evaluate, score, and chat, and it returns the free verdict: score, grade, risk, and a summary of 16 words or fewer. `componentSignals` is limited to Evidence support and Reasoning integrity. `confidenceInterval` and `scoringVersion` are omitted. Calls spend the free plan's 30 monthly credits. The default cap is 2 requests a second, 6 a minute, 30 an hour, and 40 a day. Evaluate, score, and chat share that cap. Over the cap, the API returns 429 and `Retry-After`. Signed-in chat and Paste Check on api.clearrun.net do not use the key. Chain verification and audit export need a Pro plan or higher. An unverified account cannot create a key. A free account can hold one active developer key. Revoke it before creating another. A key that is not a free developer key is refused on a free account with 403 and code `API_ACCESS_REQUIRED`. On Pro, Business, and Enterprise, API access is a saved setting. Turning it off returns 403 and code `API_ACCESS_DISABLED`. That switch does not turn a free developer key on or off.
 
 ClearRun does not use your content to train third-party or generation models. Whether your evaluations may help improve ClearRun's own scoring is an account setting: free plans start opted in, paid plans start opted out, and Enterprise stays off.
 
@@ -43,7 +43,7 @@ Without a key, `createKernelClient()` still returns a client. The first `score`,
 
 ## Credits
 
-Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 1 credit per turn.
+Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 4 credits per turn.
 
 [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing)
 
@@ -55,7 +55,7 @@ Those two sentences are the per-call costs on that page. If the page changes, th
 npm install @clearrun/sdk
 ```
 
-`npm install @clearrun/sdk` installs 0.3.1. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. `createVerifyClient()` is in 0.3.0 and later. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
+`npm install @clearrun/sdk` installs 1.2.0. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. `createVerifyClient()` is in 0.3.0 and later. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
 
 ```ts
 import { createKernelClient } from '@clearrun/sdk';
@@ -105,7 +105,7 @@ npx @clearrun/cli login
 clearrun score --text "The Eiffel Tower is in Berlin."
 ```
 
-`npm install -g @clearrun/cli` installs 0.3.1. 0.2.0 scores with `clearrun verify <file>`. The commands in this section match 0.3.1.
+`npm install -g @clearrun/cli` installs 1.2.0. 0.2.0 scores with `clearrun verify <file>`. The commands in this section match 1.2.0.
 
 `export CLEARRUN_API_KEY=YOUR_CLEARRUN_API_KEY` overrides the saved key.
 
@@ -135,7 +135,7 @@ Package page: [packages/cli/README.md](../packages/cli/README.md).
 
 ## MCP
 
-`@clearrun/mcp` 0.3.1 is a stdio server. It calls the hosted API through the SDK. If no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return the missing-key message and do not call the API. `clearrun_verify` looks up the public verdict id and does not need a key. The server logs the missing-key message to stderr at startup when scoring has no key. The key is not written into tool results. A key saved with `clearrun login` is used when `CLEARRUN_API_KEY` is unset.
+`@clearrun/mcp` 1.2.0 is a stdio server. It calls the hosted API through the SDK. If no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return the missing-key message and do not call the API. `clearrun_verify` looks up the public verdict id and does not need a key. The server logs the missing-key message to stderr at startup when scoring has no key. The key is not written into tool results. A key saved with `clearrun login` is used when `CLEARRUN_API_KEY` is unset.
 
 Install by letting the host run:
 
@@ -143,7 +143,7 @@ Install by letting the host run:
 npx -y @clearrun/mcp
 ```
 
-That command installs npm 0.3.0 until 0.3.1 is published. In 0.2.0, `clearrun_verify` still requires `CLEARRUN_API_KEY`. In 0.3.0 and 0.3.1, `clearrun_verify` does not read the key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key in both. 0.3.1 depends on `@clearrun/sdk` ^0.3.1 and `@clearrun/core-types` ^0.1.1.
+In 0.2.0, `clearrun_verify` still requires `CLEARRUN_API_KEY`. In 0.3.0 and later, `clearrun_verify` does not read the key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key. 1.2.0 depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0.
 
 ### Claude Desktop
 

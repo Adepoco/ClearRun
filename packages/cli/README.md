@@ -2,7 +2,7 @@
 
 ## Get an API key
 
-Hosted scoring needs a ClearRun account, API access, and an API key. API access is a saved setting on Pro and higher. Turning it off stops API keys from working. The free plan includes 30 monthly credits and does not include API access, so a free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+A signed-in free account with a verified email can create one developer key at [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). The full key is shown once and starts with `crun_`. It calls evaluate, score, and chat, and it returns the free verdict: score, grade, risk, and a summary of 16 words or fewer. `componentSignals` is limited to Evidence support and Reasoning integrity. `confidenceInterval` and `scoringVersion` are omitted. Calls spend the free plan's 30 monthly credits. The default cap is 2 requests a second, 6 a minute, 30 an hour, and 40 a day. Evaluate, score, and chat share that cap. Over the cap, the API returns 429 and `Retry-After`. Signed-in chat and Paste Check on api.clearrun.net do not use the key. Chain verification and audit export need a Pro plan or higher. An unverified account cannot create a key. A free account can hold one active developer key. Revoke it before creating another. A key that is not a free developer key is refused on a free account with 403 and code `API_ACCESS_REQUIRED`. On Pro, Business, and Enterprise, API access is a saved setting. Turning it off returns 403 and code `API_ACCESS_DISABLED`. That switch does not turn a free developer key on or off.
 
 ClearRun does not use your content to train third-party or generation models. Whether your evaluations may help improve ClearRun's own scoring is an account setting: free plans start opted in, paid plans start opted out, and Enterprise stays off.
 
@@ -17,11 +17,11 @@ Or set `CLEARRUN_API_KEY`. Do not commit a real key.
 
 Lookup order: `--api-key`, then `CLEARRUN_API_KEY`, then `~/.config/clearrun/config.json` from `clearrun login`, then `apiKey` in `./clearrun.config.json`. `XDG_CONFIG_HOME/clearrun/config.json` is used when `XDG_CONFIG_HOME` is set. The file is mode 0600. `clearrun whoami` prints a masked key. `clearrun logout` removes the saved key.
 
-`clearrun login` saves the key on this machine. It does not send the key to the API. The scoring routes spend credits, and the account routes use a browser session, so there is no free key check.
+`clearrun login` saves the key on this machine. It does not send the key to the API. Scoring routes spend credits, and account routes use a browser session, so login does not call the API to check the key.
 
 The first time you run the CLI with no key configured, it prints this same hint once.
 
-Command line for [ClearRun](https://clearrun.net). Version 0.3.1. `clearrun score` scores AI answer text through the hosted API at `https://api.clearrun.net`. `clearrun verify <verdictId>` looks up a verdict id.
+Command line for [ClearRun](https://clearrun.net). Version 1.2.0. `clearrun score` scores AI answer text through the hosted API at `https://api.clearrun.net`. `clearrun verify <verdictId>` looks up a verdict id.
 
 Breaking change from 0.2.0: `clearrun verify --text` and `clearrun verify <file>` no longer score. Use `clearrun score`. `clearrun verify <verdictId>` looks up `GET /api/verify/{verdictId}` and does not need an API key. This package exports `scoreText` and `lookupVerdict`. It does not export a scoring `verify()`.
 
@@ -66,7 +66,7 @@ Or run it without a global install:
 npx @clearrun/cli --help
 ```
 
-Node.js 18 or newer is required. This package is 0.3.1 and is not published yet. npm serves 0.3.0. In 0.2.0, `clearrun verify <file>` scores text.
+Node.js 18 or newer is required. This package is 1.2.0. In 0.2.0, `clearrun verify <file>` scores text.
 
 ## Quickstart
 
@@ -94,7 +94,7 @@ clearrun score --text "..."           Score inline text
 clearrun score                        Score the "paths" in clearrun.config.json
 clearrun verify <verdictId>           Look up a verdict id (does not score)
 clearrun --help                       Show help
-clearrun --version                    Show the CLI version (0.3.1)
+clearrun --version                    Show the CLI version (1.2.0)
 ```
 
 With no command, `clearrun` prints help and exits 0.
@@ -144,7 +144,7 @@ Printed text includes the score, grade, risk, issues, and summary. `--json` prin
 
 ## Credits
 
-Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 1 credit per turn. `clearrun score` calls score, so each input costs at least 3 credits. The CLI does not call chat. `clearrun verify` spends no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
+Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 4 credits per turn. `clearrun score` calls score, so each input costs at least 3 credits. The CLI does not call chat. `clearrun verify` spends no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
 
 ## Verify a verdict
 

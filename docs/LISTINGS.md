@@ -1,8 +1,10 @@
 # Listing checklist
 
-Submit `@clearrun/mcp` after the package people will install is the one you describe. The server in this repository is stdio, npm package `@clearrun/mcp` 0.3.1, started with `npx -y @clearrun/mcp`. `CLEARRUN_API_KEY` is a secret for `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat`. `clearrun_verify` does not read it, so [packages/mcp/server.json](../packages/mcp/server.json) sets `isRequired` to false. Do not publish that manifest against the npm tarball that is already live. `@clearrun/mcp@0.2.0` (published 2026-10-29) still requires a key for `clearrun_verify`. `@clearrun/mcp@0.3.0` is published and still depends on `@clearrun/core-types` ^0.1.0. Publish `@clearrun/mcp@0.3.1` to npm before the registry manifest. This repository does not run that publish.
+Submit `@clearrun/mcp` after the package people will install is the one you describe. The server in this repository is stdio, npm package `@clearrun/mcp` 1.2.0, started with `npx -y @clearrun/mcp`. `CLEARRUN_API_KEY` is a secret for `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat`. `clearrun_verify` does not read it, so [packages/mcp/server.json](../packages/mcp/server.json) sets `isRequired` to false. npm serves `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types` at 1.2.0, and both `server.json` version fields are 1.2.0. Publish the registry manifest for that published 1.2.0 tarball. Do not publish it against 0.2.0, 0.3.0, or 0.1.1. `@clearrun/mcp@0.2.0` (published 2026-10-29) still requires a key for `clearrun_verify`. `@clearrun/mcp@0.3.0` is published and still depends on `@clearrun/core-types` ^0.1.0. This repository does not run `npm publish` or the registry publish.
 
-Checked 28 October 2026. Re-open each form before you submit. Pages change.
+A signed-in free account with a verified email can create one developer key at [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). The full key is shown once and starts with `crun_`. It calls evaluate, score, and chat, and it returns the free verdict: score, grade, risk, and a summary of 16 words or fewer. `componentSignals` is limited to Evidence support and Reasoning integrity. `confidenceInterval` and `scoringVersion` are omitted. Calls spend the free plan's 30 monthly credits. The default cap is 2 requests a second, 6 a minute, 30 an hour, and 40 a day. Evaluate, score, and chat share that cap. Over the cap, the API returns 429 and `Retry-After`. Signed-in chat and Paste Check on api.clearrun.net do not use the key. Chain verification and audit export need a Pro plan or higher. An unverified account cannot create a key. A free account can hold one active developer key. Revoke it before creating another. A key that is not a free developer key is refused on a free account with 403 and code `API_ACCESS_REQUIRED`. On Pro, Business, and Enterprise, API access is a saved setting. Turning it off returns 403 and code `API_ACCESS_DISABLED`. That switch does not turn a free developer key on or off.
+
+Directory forms checked 28 October 2026. Re-open each form before you submit. Pages change. Version and free developer key facts checked 11 November 2026 against npm and [https://api.clearrun.net/developers](https://api.clearrun.net/developers).
 
 One-line description you can reuse:
 
@@ -14,23 +16,24 @@ Scores AI answers for honesty (whether confidence is backed by its reasoning). N
 
 Do this before PulseMCP. The manifest is [packages/mcp/server.json](../packages/mcp/server.json). `mcpName` in [packages/mcp/package.json](../packages/mcp/package.json) is `io.github.adepoco/clearrun-mcp`. That name matches `server.json`. Schema: `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`. Docs: [registry quickstart](https://modelcontextprotocol.io/registry/quickstart).
 
-`mcpName` is read from the **published** npm package. npm `@clearrun/mcp@0.1.1` does not contain it. This repo is 0.3.1 in `package.json` and in both `server.json` version fields. npm `@clearrun/mcp@0.3.0` is already published and still depends on `@clearrun/core-types` ^0.1.0. npm `@clearrun/mcp@0.2.0` (published 2026-10-29) still requires an API key for `clearrun_verify`. `server.json` in this repository says the key is not required, because the source tool does not use it. Do not publish this manifest against 0.3.0, 0.2.0, or 0.1.1. Those tarballs do not implement it. Publish the npm packages below first, then publish the registry manifest.
+`mcpName` is read from the **published** npm package. npm `@clearrun/mcp@0.1.1` does not contain it. This repo is 1.2.0 in `package.json` and in both `server.json` version fields. npm `@clearrun/mcp@1.2.0` is published and depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0. npm `@clearrun/mcp@0.3.0` is still published and still depends on `@clearrun/core-types` ^0.1.0. npm `@clearrun/mcp@0.2.0` (published 2026-10-29) still requires an API key for `clearrun_verify`. `server.json` in this repository says the key is not required, because the source tool does not use it. Do not publish this manifest against 0.3.0, 0.2.0, or 0.1.1. Those tarballs do not implement it. npm 1.2.0 is already published. Publish the registry manifest for 1.2.0.
 
 This repository does not run `npm publish` or `mcp-publisher publish`.
 
 ```bash
-# From the repository root, after 0.3.1 is the commit you intend to publish.
-# package.json and both server.json version fields are 0.3.1.
+# 1.2.0 is already on npm. Confirm it, then publish the registry manifest.
+# package.json and both server.json version fields are 1.2.0.
+# Do not publish 1.2.0 again. This repository does not run npm publish.
+curl -s https://registry.npmjs.org/@clearrun/mcp/1.2.0 | jq -r .mcpName
+# Expected output: io.github.adepoco/clearrun-mcp
+
+# Later version only. From the repository root, after that version is the commit you intend to publish.
 # @clearrun/sdk must be on npm before @clearrun/cli and @clearrun/mcp.
 # mcpName stays io.github.adepoco/clearrun-mcp.
 # Publish to npm (npm account with access to @clearrun). Do not use a CI token in the shell history you share.
-npm publish --access public -w @clearrun/sdk
-npm publish --access public -w @clearrun/cli
-npm publish --access public -w @clearrun/mcp
-
-# Confirm the registry metadata, not the repo file:
-curl -s https://registry.npmjs.org/@clearrun/mcp/0.3.1 | jq -r .mcpName
-# Expected output: io.github.adepoco/clearrun-mcp
+# npm publish --access public -w @clearrun/sdk
+# npm publish --access public -w @clearrun/cli
+# npm publish --access public -w @clearrun/mcp
 
 # Install mcp-publisher:
 # https://modelcontextprotocol.io/registry/quickstart

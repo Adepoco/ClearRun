@@ -92,6 +92,8 @@ test('login opens the keys page, saves a mode 0600 config, and does not call the
   assert.deepEqual(h.fetched, []);
   assert.equal(h.calls.length, 0);
   assert.match(h.out(), /https:\/\/api\.clearrun\.net\/account\/keys/);
+  assert.match(h.out(), /free developer key/);
+  assert.equal(h.text().includes('Pro plan or higher'), false);
   assert.match(h.out(), /Key: cr_t\.\.\.cret/);
   assert.equal(h.text().includes(SECRET), false);
 
@@ -183,6 +185,8 @@ test('score without a key exits 1 with the login message and does not score', as
   const h = setup();
   assert.equal(await run(['score', '--text', 'hello'], h.deps), 1);
   assert.match(h.err(), /https:\/\/api\.clearrun\.net\/account\/keys/);
+  assert.match(h.err(), /free developer key/);
+  assert.equal(h.err().includes('Pro plan or higher'), false);
   assert.match(h.err(), /npx @clearrun\/cli login/);
   assert.match(h.err(), /CLEARRUN_API_KEY/);
   assert.equal(h.calls.length, 0);

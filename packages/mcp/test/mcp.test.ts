@@ -582,6 +582,12 @@ test('server.json does not require a key for verify, and still names the scoring
   assert.match(variable.description, /clearrun_chat/);
   assert.match(variable.description, /clearrun_verify/);
   assert.match(variable.description, /does not read/);
+  assert.match(variable.description, /free developer key/);
+  assert.match(variable.description, /https:\/\/api\.clearrun\.net\/account\/keys/);
+  assert.equal(variable.description.includes('Free plan keys are rejected'), false);
+  assert.equal(variable.description.includes('Pro plan or higher'), false);
+  assert.equal(variable.description.includes('\u2014'), false);
+  assert.equal(variable.description.includes('\u2013'), false);
   assert.equal(manifest.name, 'io.github.adepoco/clearrun-mcp');
   assert.equal(manifest.version, '1.2.0');
   assert.equal(manifest.packages[0].version, '1.2.0');

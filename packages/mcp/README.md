@@ -2,7 +2,7 @@
 
 ## Get an API key
 
-Hosted scoring needs a ClearRun account, API access, and an API key. API access is a saved setting on Pro and higher. Turning it off stops API keys from working. The free plan includes 30 monthly credits and does not include API access, so a free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+A signed-in free account with a verified email can create one developer key at [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). The full key is shown once and starts with `crun_`. It calls evaluate, score, and chat, and it returns the free verdict: score, grade, risk, and a summary of 16 words or fewer. `componentSignals` is limited to Evidence support and Reasoning integrity. `confidenceInterval` and `scoringVersion` are omitted. Calls spend the free plan's 30 monthly credits. The default cap is 2 requests a second, 6 a minute, 30 an hour, and 40 a day. Evaluate, score, and chat share that cap. Over the cap, the API returns 429 and `Retry-After`. Signed-in chat and Paste Check on api.clearrun.net do not use the key. Chain verification and audit export need a Pro plan or higher. An unverified account cannot create a key. A free account can hold one active developer key. Revoke it before creating another. A key that is not a free developer key is refused on a free account with 403 and code `API_ACCESS_REQUIRED`. On Pro, Business, and Enterprise, API access is a saved setting. Turning it off returns 403 and code `API_ACCESS_DISABLED`. That switch does not turn a free developer key on or off.
 
 ClearRun does not use your content to train third-party or generation models. Whether your evaluations may help improve ClearRun's own scoring is an account setting: free plans start opted in, paid plans start opted out, and Enterprise stays off.
 
@@ -47,7 +47,7 @@ Or install it in a project:
 npm install @clearrun/mcp
 ```
 
-`@clearrun/mcp` 0.3.1 depends on `@clearrun/sdk` ^0.3.1 and `@clearrun/core-types` ^0.1.1. `npx -y @clearrun/mcp` installs npm 0.3.0 until 0.3.1 is published. In the 0.2.0 build, `clearrun_verify` still requires `CLEARRUN_API_KEY`. The tool list below matches 0.3.1, where verify does not read the key. Published 0.3.0 still allows `@clearrun/core-types` 0.1.0, which rejects schema 1.1.0 coarse responses and coarse 1.0.0 public and free verdicts.
+`@clearrun/mcp` 1.2.0 depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0. `npx -y @clearrun/mcp` installs 1.2.0. In the 0.2.0 build, `clearrun_verify` still requires `CLEARRUN_API_KEY`. The tool list below matches 1.2.0, where verify does not read the key.
 
 From a clone of [https://github.com/Adepoco/ClearRun](https://github.com/Adepoco/ClearRun):
 
@@ -61,7 +61,7 @@ From a clone, point the host `command` at `node` and `args` at the absolute path
 
 ## Host configuration
 
-Each block runs `npx -y @clearrun/mcp` and passes `CLEARRUN_API_KEY` in `env`. Replace `YOUR_CLEARRUN_API_KEY` with a Pro key that has API access turned on. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need that key. Omit `env` only when the host will call `clearrun_verify` alone. Prefer your host's secret input when it has one, so the key is not stored in the repo.
+Each block runs `npx -y @clearrun/mcp` and passes `CLEARRUN_API_KEY` in `env`. Replace `YOUR_CLEARRUN_API_KEY` with a key from the keys page. A verified free account can create one free developer key. On Pro, Business, and Enterprise, API access must be turned on. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need that key. Omit `env` only when the host will call `clearrun_verify` alone. Prefer your host's secret input when it has one, so the key is not stored in the repo.
 
 ### Claude Desktop
 
@@ -170,11 +170,11 @@ None of these tools fact-check the answer.
 
 In a host, ask in plain language, for example: "Use clearrun_score on this answer." The host fills the arguments.
 
-A 403 from the API is returned as text, including `API access requires a Pro plan or higher.` when that is what the API sends.
+A 403 from the API is returned as text, including the `error` string the API sends. A free account that presents a key which is not a free developer key gets code `API_ACCESS_REQUIRED`. Turning API access off on Pro, Business, or Enterprise gets code `API_ACCESS_DISABLED`.
 
 ## Credits
 
-Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 1 credit per turn. `clearrun_verify` spends no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
+Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 4 credits per turn. `clearrun_verify` spends no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
 
 ## Verify a verdict
 
@@ -188,7 +188,7 @@ That public request does not use an API key. The MCP tool `clearrun_verify` does
 
 ## Registry name
 
-`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 1.2.0, stdio). `CLEARRUN_API_KEY` is a secret and `isRequired` is false: `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need it, and `clearrun_verify` does not. Publish the npm tarball before that manifest. The published `@clearrun/mcp@0.3.0` tarball does not match it. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
+`package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 1.2.0, stdio). `CLEARRUN_API_KEY` is a secret and `isRequired` is false: `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need it, and `clearrun_verify` does not. npm `@clearrun/mcp` 1.2.0 is published. Submitting this manifest to the registry is a separate step. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
 
 ## Links
 

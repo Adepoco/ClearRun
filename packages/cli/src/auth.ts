@@ -171,7 +171,7 @@ export function showFirstRunHint(io: AuthIo): void {
 
 export async function loginCommand(io: AuthIo): Promise<number> {
   const path = configPathFor(io.env);
-  io.stdout('Create a ClearRun API key (Pro plan or higher):');
+  io.stdout('Create a ClearRun API key. A signed-in free account with a verified email can create one free developer key:');
   io.stdout(API_KEYS_URL);
   io.stdout('Sign in on that page if you need an account. Then paste the key here.');
   try {

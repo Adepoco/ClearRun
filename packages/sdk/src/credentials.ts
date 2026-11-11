@@ -26,7 +26,7 @@ import type { FetchLike } from './hosted-client';
 export const API_KEYS_URL = 'https://api.clearrun.net/account/keys';
 
 export const MISSING_API_KEY_MESSAGE =
-  'No ClearRun API key is configured. Create a key at https://api.clearrun.net/account/keys (Pro plan or higher). Then run `npx @clearrun/cli login`, or set CLEARRUN_API_KEY.';
+  'No ClearRun API key is configured. Create a key at https://api.clearrun.net/account/keys. A signed-in free account with a verified email can create one free developer key. Then run `npx @clearrun/cli login`, or set CLEARRUN_API_KEY.';
 
 /**
  * Path of a cheap authenticated key check, relative to the API base URL.
