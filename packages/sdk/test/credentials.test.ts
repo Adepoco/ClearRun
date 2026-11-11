@@ -33,10 +33,13 @@ test('missing-key message names the keys page and the login command', () => {
   assert.equal(err.signupUrl, API_KEYS_URL);
   assert.equal(err.code, 'MISSING_API_KEY');
   assert.match(err.message, /https:\/\/api\.clearrun\.net\/account\/keys/);
+  assert.match(err.message, /free developer key/);
+  assert.equal(err.message.includes('Pro plan or higher'), false);
   assert.match(err.message, /npx @clearrun\/cli login/);
   assert.match(err.message, /CLEARRUN_API_KEY/);
   assert.equal(err.message.includes(SECRET), false);
   assert.equal(err.message.includes('\u2014'), false);
+  assert.equal(err.message.includes('\u2013'), false);
 });
 
 test('maskApiKey never returns the full key', () => {

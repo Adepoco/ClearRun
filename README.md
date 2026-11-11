@@ -2,7 +2,7 @@
 
 ## Get an API key
 
-Hosted scoring needs a ClearRun account, API access, and an API key. API access is a saved setting on Pro and higher. Turning it off stops API keys from working. The free plan includes 30 monthly credits and does not include API access, so a free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+A signed-in free account with a verified email can create one developer key at [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). The full key is shown once and starts with `crun_`. It calls evaluate, score, and chat, and it returns the free verdict: score, grade, risk, and a summary of 16 words or fewer. `componentSignals` is limited to Evidence support and Reasoning integrity. `confidenceInterval` and `scoringVersion` are omitted. Calls spend the free plan's 30 monthly credits. The default cap is 2 requests a second, 6 a minute, 30 an hour, and 40 a day. Evaluate, score, and chat share that cap. Over the cap, the API returns 429 and `Retry-After`. Signed-in chat and Paste Check on api.clearrun.net do not use the key. Chain verification and audit export need a Pro plan or higher. An unverified account cannot create a key. A free account can hold one active developer key. Revoke it before creating another. A key that is not a free developer key is refused on a free account with 403 and code `API_ACCESS_REQUIRED`. On Pro, Business, and Enterprise, API access is a saved setting. Turning it off returns 403 and code `API_ACCESS_DISABLED`. That switch does not turn a free developer key on or off.
 
 ClearRun does not use your content to train third-party or generation models. Whether your evaluations may help improve ClearRun's own scoring is an account setting: free plans start opted in, paid plans start opted out, and Enterprise stays off.
 
@@ -37,7 +37,7 @@ Three ways to call it:
 
 `@clearrun/core-types` is 1.2.0. The SDK depends on it. `@clearrun/scoring`, `@clearrun/security`, and `@clearrun/vendors` stay at 0.1.0. One page for all three clients: [docs/developers.md](docs/developers.md).
 
-The version numbers in that table are this repository. After a maintainer publishes them, npm will serve 1.2.0 of `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types`. Until then npm still serves `@clearrun/sdk` 0.3.1, `@clearrun/cli` 0.3.1, `@clearrun/mcp` 0.3.1, and `@clearrun/core-types` 0.1.1. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` here are 1.2.0.
+npm serves 1.2.0 of `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types`. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` here are 1.2.0.
 
 ## Access
 
@@ -61,7 +61,7 @@ cd ClearRun
 npm install
 ```
 
-Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. `npm install` from the registry still resolves `@clearrun/sdk` and `@clearrun/cli` to 0.3.1, `@clearrun/core-types` to 0.1.1, and `@clearrun/mcp` to 0.3.1 until a maintainer publishes 1.2.0. The quickstart below matches this repository. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
+Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. `npm install` from the registry resolves `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types` to 1.2.0. The quickstart below matches this repository. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
 
 ## Quickstart
 
@@ -119,7 +119,7 @@ Short examples for each client are in the package READMEs and in [docs/developer
 
 ## Credits
 
-Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 1 credit per turn. `clearrun verify` and `GET /api/verify/{id}` spend no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
+Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 4 credits per turn. `clearrun verify` and `GET /api/verify/{id}` spend no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
 
 ## Verify a verdict
 

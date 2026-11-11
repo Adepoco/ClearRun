@@ -2,7 +2,7 @@
 
 ## Get an API key
 
-Hosted scoring needs a ClearRun account, API access, and an API key. API access is a saved setting on Pro and higher. Turning it off stops API keys from working. The free plan includes 30 monthly credits and does not include API access, so a free plan key is rejected. The API message is `API access requires a Pro plan or higher.`
+A signed-in free account with a verified email can create one developer key at [https://api.clearrun.net/account/keys](https://api.clearrun.net/account/keys). The full key is shown once and starts with `crun_`. It calls evaluate, score, and chat, and it returns the free verdict: score, grade, risk, and a summary of 16 words or fewer. `componentSignals` is limited to Evidence support and Reasoning integrity. `confidenceInterval` and `scoringVersion` are omitted. Calls spend the free plan's 30 monthly credits. The default cap is 2 requests a second, 6 a minute, 30 an hour, and 40 a day. Evaluate, score, and chat share that cap. Over the cap, the API returns 429 and `Retry-After`. Signed-in chat and Paste Check on api.clearrun.net do not use the key. Chain verification and audit export need a Pro plan or higher. An unverified account cannot create a key. A free account can hold one active developer key. Revoke it before creating another. A key that is not a free developer key is refused on a free account with 403 and code `API_ACCESS_REQUIRED`. On Pro, Business, and Enterprise, API access is a saved setting. Turning it off returns 403 and code `API_ACCESS_DISABLED`. That switch does not turn a free developer key on or off.
 
 ClearRun does not use your content to train third-party or generation models. Whether your evaluations may help improve ClearRun's own scoring is an account setting: free plans start opted in, paid plans start opted out, and Enterprise stays off.
 
@@ -41,7 +41,7 @@ For local development only, pass `{ forceMock: true }` (or a `mock` options obje
 npm install @clearrun/sdk
 ```
 
-That also installs `@clearrun/core-types`. Node.js 18 or newer is required (`fetch` is built in). This package is 1.2.0 in this repository. `npm install @clearrun/sdk` still resolves to 0.3.1 until a maintainer publishes 1.2.0. npm `@clearrun/core-types` is still 0.1.1 until 1.2.0 is published. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. It does not export `createVerifyClient()`.
+That also installs `@clearrun/core-types`. Node.js 18 or newer is required (`fetch` is built in). This package and `@clearrun/core-types` are 1.2.0. `npm install @clearrun/sdk` installs 1.2.0. 0.2.0 has `score`, `evaluate`, `chat`, and `client.verify`. It does not export `createVerifyClient()`.
 
 A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers, so do not put that key in a browser page.
 
@@ -138,7 +138,7 @@ Errors from the API throw `HostedApiError` with `status`, `message`, and optiona
 
 ## Credits
 
-Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 1 credit per turn. `verify` spends no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
+Credits are metered per call. On the public pricing page, evaluate and score cost at least 3 credits. Chat costs at most 4 credits per turn. `verify` spends no credits. Current costs and plans: [https://api.clearrun.net/pricing](https://api.clearrun.net/pricing).
 
 ## Verify a verdict
 
