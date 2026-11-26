@@ -33,11 +33,11 @@ Three ways to call it:
 | --- | --- | --- |
 | [`@clearrun/sdk`](packages/sdk/README.md) | 1.2.0 | Your own app or service should call the API. |
 | [`@clearrun/cli`](packages/cli/README.md) | 1.2.0 | You want a terminal command or a CI check. |
-| [`@clearrun/mcp`](packages/mcp/README.md) | 1.2.0 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
+| [`@clearrun/mcp`](packages/mcp/README.md) | 1.2.1 | Claude Desktop, Claude Code, Cursor, or VS Code should call the tools. |
 
 `@clearrun/core-types` is 1.2.0. The SDK depends on it. `@clearrun/scoring`, `@clearrun/security`, and `@clearrun/vendors` stay at 0.1.0. One page for all three clients: [docs/developers.md](docs/developers.md).
 
-npm serves 1.2.0 of `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types`. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` here are 1.2.0.
+npm serves 1.2.0 of `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types`. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository. `@clearrun/sdk` and `@clearrun/cli` here are 1.2.0. `@clearrun/mcp` here is 1.2.1.
 
 ## Access
 
@@ -61,7 +61,7 @@ cd ClearRun
 npm install
 ```
 
-Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. `npm install` from the registry resolves `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types` to 1.2.0. The quickstart below matches this repository. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
+Node.js 18 or newer. Tag `v0.1.0-oss` is an earlier snapshot. `npm install` from the registry resolves `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types` to 1.2.0. This clone's `@clearrun/mcp` is 1.2.1. The quickstart below matches this repository. A secret API key belongs on a server or a backend proxy. The hosted API sends no CORS headers.
 
 ## Quickstart
 

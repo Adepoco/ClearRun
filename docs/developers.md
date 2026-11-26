@@ -16,11 +16,11 @@ Pick one client:
 | --- | --- | --- |
 | An app, script, or service | [`@clearrun/sdk`](https://www.npmjs.com/package/@clearrun/sdk) | 1.2.0 |
 | A terminal or CI check | [`@clearrun/cli`](https://www.npmjs.com/package/@clearrun/cli) | 1.2.0 |
-| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 1.2.0 |
+| A tool inside Claude, Cursor, or VS Code | [`@clearrun/mcp`](https://www.npmjs.com/package/@clearrun/mcp) | 1.2.1 |
 
 Shared types are [`@clearrun/core-types`](https://www.npmjs.com/package/@clearrun/core-types) 1.2.0. Node.js 18 or newer.
 
-npm serves 1.2.0 of `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types`. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match 1.2.0.
+npm serves 1.2.0 of `@clearrun/sdk`, `@clearrun/cli`, `@clearrun/mcp`, and `@clearrun/core-types`. Breaking change from 0.2.0: `clearrun verify --text` no longer scores. Use `clearrun score`. `clearrun verify <verdictId>` is a lookup and does not need an API key. On npm 0.2.0, `clearrun verify <file>` scores text, the CLI exports a scoring `verify()`, the SDK does not export `createVerifyClient()`, and MCP verify still requires a key. The commands below match this repository: `@clearrun/sdk` and `@clearrun/cli` are 1.2.0, and `@clearrun/mcp` is 1.2.1.
 
 ## Get an API key
 
@@ -135,7 +135,7 @@ Package page: [packages/cli/README.md](../packages/cli/README.md).
 
 ## MCP
 
-`@clearrun/mcp` 1.2.0 is a stdio server. It calls the hosted API through the SDK. If no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return the missing-key message and do not call the API. `clearrun_verify` looks up the public verdict id and does not need a key. The server logs the missing-key message to stderr at startup when scoring has no key. The key is not written into tool results. A key saved with `clearrun login` is used when `CLEARRUN_API_KEY` is unset.
+`@clearrun/mcp` 1.2.1 is a stdio server. It calls the hosted API through the SDK. If no key is configured, `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return the missing-key message and do not call the API. `clearrun_verify` looks up the public verdict id and does not need a key. The server logs the missing-key message to stderr at startup when scoring has no key. The key is not written into tool results. A key saved with `clearrun login` is used when `CLEARRUN_API_KEY` is unset.
 
 Install by letting the host run:
 
@@ -143,7 +143,7 @@ Install by letting the host run:
 npx -y @clearrun/mcp
 ```
 
-In 0.2.0, `clearrun_verify` still requires `CLEARRUN_API_KEY`. In 0.3.0 and later, `clearrun_verify` does not read the key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key. 1.2.0 depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0.
+In 0.2.0, `clearrun_verify` still requires `CLEARRUN_API_KEY`. In 0.3.0 and later, `clearrun_verify` does not read the key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need a key. 1.2.1 depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0.
 
 ### Claude Desktop
 
@@ -236,7 +236,7 @@ Ask the host in plain language, for example: "Use clearrun_score on this answer.
 
 A successful score has `scored: true`. A successful chat has `answered: true` and `scored: true`. A 200 body with no verdict, and a chat body with no answer and no verdict, is a tool error (`outcome` is `failed`). That error does not mean a verdict id was invalid.
 
-The registry name in `package.json` is `io.github.adepoco/clearrun-mcp`. The manifest is [packages/mcp/server.json](../packages/mcp/server.json). Directory submission steps are in [LISTINGS.md](./LISTINGS.md).
+The registry name in `package.json` is `net.clearrun/clearrun-mcp`. The manifest is [packages/mcp/server.json](../packages/mcp/server.json). Directory submission steps are in [LISTINGS.md](./LISTINGS.md).
 
 Package page: [packages/mcp/README.md](../packages/mcp/README.md).
 

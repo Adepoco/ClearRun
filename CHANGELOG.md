@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1 (2026-11-26)
+
+`@clearrun/mcp` is 1.2.1 in this repository. `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/core-types` stay at 1.2.0. The shared contract stays schema 1.2.0. npm still serves `@clearrun/mcp` 1.2.0 until a maintainer publishes 1.2.1. This repository does not publish the package.
+
+### @clearrun/mcp
+- Version 1.2.1. Depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0. `packages/mcp/server.json` version fields are 1.2.1.
+- `mcpName` in `package.json` and `name` in `server.json` are `net.clearrun/clearrun-mcp`, the DNS-verified namespace for `clearrun.net`.
+
 ## 1.2.0 (2026-11-10)
 
 `@clearrun/core-types`, `@clearrun/sdk`, `@clearrun/cli`, and `@clearrun/mcp` are 1.2.0 in this repository. The shared contract is schema 1.2.0. npm still serves `@clearrun/sdk` 0.3.1, `@clearrun/cli` 0.3.1, `@clearrun/mcp` 0.3.1, and `@clearrun/core-types` 0.1.1 until a maintainer publishes 1.2.0.
