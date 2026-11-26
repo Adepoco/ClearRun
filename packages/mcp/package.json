@@ -1,7 +1,7 @@
 {
   "name": "@clearrun/mcp",
-  "version": "1.2.0",
-  "mcpName": "io.github.adepoco/clearrun-mcp",
+  "version": "1.2.1",
+  "mcpName": "net.clearrun/clearrun-mcp",
   "description": "ClearRun MCP server. Scores AI answers for honesty (confidence-justification alignment) through the hosted API. Not a fact-checker.",
   "license": "MIT",
   "author": "Adepoco <contact@adepoco.com>",
