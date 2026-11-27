@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "net.clearrun/clearrun-mcp",
+  "name": "io.github.Adepoco/clearrun-mcp",
   "title": "ClearRun",
   "description": "Scores AI answers for honesty calibration. Not a fact-checker.",
   "websiteUrl": "https://clearrun.net",

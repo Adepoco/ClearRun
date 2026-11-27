@@ -14,19 +14,19 @@ Scores AI answers for honesty (whether confidence is backed by its reasoning). N
 
 ## Official MCP Registry
 
-Do this before PulseMCP. The manifest is [packages/mcp/server.json](../packages/mcp/server.json). `mcpName` in [packages/mcp/package.json](../packages/mcp/package.json) is `net.clearrun/clearrun-mcp`. That name matches `server.json`. The namespace is the DNS-verified reverse domain of `clearrun.net`. Schema: `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`. Docs: [registry quickstart](https://modelcontextprotocol.io/registry/quickstart) and [authentication](https://modelcontextprotocol.io/registry/authentication).
+Do this before PulseMCP. The manifest is [packages/mcp/server.json](../packages/mcp/server.json). `mcpName` in [packages/mcp/package.json](../packages/mcp/package.json) is `io.github.Adepoco/clearrun-mcp`. That name matches `server.json`. The namespace is the GitHub org login `Adepoco`. The Official MCP Registry treats GitHub namespaces as case-sensitive ([registry issue #689](https://github.com/modelcontextprotocol/registry/issues/689)). Schema: `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`. Docs: [registry quickstart](https://modelcontextprotocol.io/registry/quickstart) and [authentication](https://modelcontextprotocol.io/registry/authentication).
 
-`mcpName` is read from the **published** npm package. npm `@clearrun/mcp@0.1.1` does not contain it. This repo is 1.2.1 in `package.json` and in both `server.json` version fields. npm `@clearrun/mcp@1.2.0` is published, depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0, and its `mcpName` is still `io.github.adepoco/clearrun-mcp`. That tarball does not match this manifest. npm `@clearrun/mcp@0.3.0` is still published and still depends on `@clearrun/core-types` ^0.1.0. npm `@clearrun/mcp@0.2.0` (published 2026-10-29) still requires an API key for `clearrun_verify`. `server.json` in this repository says the key is not required, because the source tool does not use it. Do not publish this manifest against 1.2.0, 0.3.0, 0.2.0, or 0.1.1. Publish `@clearrun/mcp@1.2.1` first, then publish the registry manifest for 1.2.1.
+`mcpName` is read from the **published** npm package. npm `@clearrun/mcp@0.1.1` does not contain it. This repo is 1.2.1 in `package.json` and in both `server.json` version fields. npm `@clearrun/mcp@1.2.0` is published, depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0, and its `mcpName` lowercases the org login `Adepoco`. That tarball does not match `io.github.Adepoco/clearrun-mcp`. npm `@clearrun/mcp@0.3.0` is still published and still depends on `@clearrun/core-types` ^0.1.0. npm `@clearrun/mcp@0.2.0` (published 2026-10-29) still requires an API key for `clearrun_verify`. `server.json` in this repository says the key is not required, because the source tool does not use it. Do not publish this manifest against 1.2.0, 0.3.0, 0.2.0, or 0.1.1. Publish `@clearrun/mcp@1.2.1` first, then publish the registry manifest for 1.2.1.
 
 This repository does not run `npm publish` or `mcp-publisher publish`. It does not add a GitHub Actions workflow for the registry.
 
 ```bash
 # 1.2.1 is not on npm yet. 1.2.0 is.
 # package.json and both server.json version fields are 1.2.1.
-# mcpName is net.clearrun/clearrun-mcp.
+# mcpName is io.github.Adepoco/clearrun-mcp.
 # Do not publish the registry manifest against 1.2.0. This repository does not run npm publish.
 curl -s https://registry.npmjs.org/@clearrun/mcp/1.2.0 | jq -r .mcpName
-# That tarball still prints io.github.adepoco/clearrun-mcp.
+# That tarball still lowercases Adepoco. It does not match io.github.Adepoco/clearrun-mcp.
 
 # A maintainer publishes 1.2.1 from the repository root.
 # @clearrun/sdk 1.2.0 and @clearrun/core-types 1.2.0 are already on npm.
@@ -34,23 +34,24 @@ curl -s https://registry.npmjs.org/@clearrun/mcp/1.2.0 | jq -r .mcpName
 # Do not put an npm token in shell history you share, and do not commit one.
 # npm publish --access public -w @clearrun/mcp
 curl -s https://registry.npmjs.org/@clearrun/mcp/1.2.1 | jq -r .mcpName
-# Expected output: net.clearrun/clearrun-mcp
+# Expected output: io.github.Adepoco/clearrun-mcp
 
 # Install mcp-publisher:
 # https://modelcontextprotocol.io/registry/quickstart
-# DNS auth grants net.clearrun/*. Do not use mcp-publisher login github for this name.
+# GitHub auth grants io.github.Adepoco/* when the org login matches, including case.
+# https://github.com/modelcontextprotocol/registry/issues/689
 # https://modelcontextprotocol.io/registry/authentication
 cd packages/mcp
-mcp-publisher login dns --domain clearrun.net --private-key "$MCP_PRIVATE_KEY"
+mcp-publisher login github
 mcp-publisher publish
 ```
 
-Prove `clearrun.net` with one apex TXT record before that login. The record name is `clearrun.net`, not `_mcp-auth.clearrun.net` and not `_mcp-registry.clearrun.net`. The value looks like `v=MCPv1; k=ed25519; p=PUBLIC_KEY`. Generate the key pair outside this repository. Ed25519 needs OpenSSL 3. Keep the private key out of the repo and out of shell history you share. `MCP_PRIVATE_KEY` is the hex private key for the login above. After the record propagates, `dig TXT clearrun.net +short` should show the same `v=MCPv1` value. Then run the login and `mcp-publisher publish` from `packages/mcp`.
+Publishing under `io.github.Adepoco` needs an Owner of the `Adepoco` GitHub org. `mcp-publisher login github` with no token grants your personal namespace. The device flow cannot read organization membership. To publish this name, sign in as an Owner with a classic personal access token that has the `read:org` scope, or a fine-grained token with Organization members set to read-only: `mcp-publisher login github --token`. Keep that token out of the repo and out of shell history you share. This repository does not add a GitHub Actions workflow.
 
 Confirm:
 
 ```bash
-curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=net.clearrun/clearrun-mcp"
+curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.Adepoco/clearrun-mcp"
 ```
 
 ## Smithery

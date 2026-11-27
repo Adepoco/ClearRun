@@ -643,7 +643,7 @@ test('server.json does not require a key for verify, and still names the scoring
   assert.equal(variable.description.includes('Pro plan or higher'), false);
   assert.equal(variable.description.includes('\u2014'), false);
   assert.equal(variable.description.includes('\u2013'), false);
-  assert.equal(manifest.name, 'net.clearrun/clearrun-mcp');
+  assert.equal(manifest.name, 'io.github.Adepoco/clearrun-mcp');
   assert.equal(manifest.version, '1.2.1');
   assert.equal(manifest.packages[0].version, '1.2.1');
   const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
@@ -652,7 +652,7 @@ test('server.json does not require a key for verify, and still names the scoring
     dependencies: Record<string, string>;
   };
   assert.equal(pkg.version, '1.2.1');
-  assert.equal(pkg.mcpName, 'net.clearrun/clearrun-mcp');
+  assert.equal(pkg.mcpName, 'io.github.Adepoco/clearrun-mcp');
   assert.equal(pkg.dependencies['@clearrun/sdk'], '^1.2.0');
   assert.equal(pkg.dependencies['@clearrun/core-types'], '^1.2.0');
   assert.equal(SERVER_VERSION, pkg.version);

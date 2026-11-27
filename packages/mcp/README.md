@@ -190,7 +190,7 @@ That public request does not use an API key. The MCP tool `clearrun_verify` does
 
 ## Registry name
 
-`package.json` sets `mcpName` to `net.clearrun/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 1.2.1, stdio) under the DNS-verified namespace for `clearrun.net`. `CLEARRUN_API_KEY` is a secret and `isRequired` is false: `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need it, and `clearrun_verify` does not. npm `@clearrun/mcp` 1.2.0 is published. Submitting this manifest waits until 1.2.1 is on npm, because the registry reads `mcpName` from the published tarball. This repository does not publish it. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
+`package.json` sets `mcpName` to `io.github.Adepoco/clearrun-mcp`. `server.json` in this package is the Official MCP Registry manifest (npm package `@clearrun/mcp`, version 1.2.1, stdio) for the GitHub org `Adepoco`. The registry treats that namespace as case-sensitive, so the org segment matches the login `Adepoco`. `CLEARRUN_API_KEY` is a secret and `isRequired` is false: `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need it, and `clearrun_verify` does not. npm `@clearrun/mcp` 1.2.0 is published. Submitting this manifest waits until 1.2.1 is on npm, because the registry reads `mcpName` from the published tarball. This repository does not publish it. See [docs/LISTINGS.md](https://github.com/Adepoco/ClearRun/blob/main/docs/LISTINGS.md).
 
 ## Links
 
