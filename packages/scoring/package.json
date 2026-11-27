@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "ClearRun UI mapping for honesty verdicts (OPEN). Numeric scoring formula lives in the closed kernel.",
   "license": "MIT",
+  "homepage": "https://clearrun.net",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adepoco/ClearRun.git",
+    "directory": "packages/scoring"
+  },
+  "bugs": {
+    "url": "https://github.com/Adepoco/ClearRun/issues"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
