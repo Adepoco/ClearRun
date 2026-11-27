@@ -8,7 +8,7 @@ ClearRun scores the honesty of an AI answer: whether the confidence it expresses
 
 The server is local stdio. There is no hosted MCP URL. Do not add a `url` field, and do not set the transport to `streamableHttp` or `sse`.
 
-Package: `@clearrun/mcp`. `mcpName` in `packages/mcp/package.json` is `net.clearrun/clearrun-mcp`. `packages/mcp/server.json` is the registry manifest for that name, version 1.2.1, stdio. This repository's package version is 1.2.1. npm latest is 1.2.0. `npx -y @clearrun/mcp` installs the version npm serves, which is 1.2.0 until 1.2.1 is published. Do not publish this package. Do not open a registry or marketplace submission.
+Package: `@clearrun/mcp`. `mcpName` in `packages/mcp/package.json` is `io.github.Adepoco/clearrun-mcp`. `packages/mcp/server.json` is the registry manifest for that name, version 1.2.1, stdio. This repository's package version is 1.2.1. npm latest is 1.2.0. `npx -y @clearrun/mcp` installs the version npm serves, which is 1.2.0 until 1.2.1 is published. Do not publish this package. Do not open a registry or marketplace submission.
 
 The four tools below match this repository (1.2.1). npm `@clearrun/mcp@1.2.0` exposes the same four tools. On 1.2.0 and 1.2.1, `clearrun_verify` does not read `CLEARRUN_API_KEY`. npm `@clearrun/mcp@0.2.0`, published 2026-10-29, still requires `CLEARRUN_API_KEY` for `clearrun_verify`.
 

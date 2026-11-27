@@ -6,7 +6,7 @@
 
 ### @clearrun/mcp
 - Version 1.2.1. Depends on `@clearrun/sdk` ^1.2.0 and `@clearrun/core-types` ^1.2.0. `packages/mcp/server.json` version fields are 1.2.1.
-- `mcpName` in `package.json` and `name` in `server.json` are `net.clearrun/clearrun-mcp`, the DNS-verified namespace for `clearrun.net`.
+- `mcpName` in `package.json` and `name` in `server.json` are `io.github.Adepoco/clearrun-mcp`. The Official MCP Registry treats GitHub namespaces as case-sensitive. The org login is `Adepoco`.
 
 ## 1.2.0 (2026-11-10)
 
@@ -54,7 +54,7 @@ This is a breaking type change. `FailureCategory` is removed from `@clearrun/cor
 - Schema 1.1.0 public verify and free score responses may omit `scoringVersion`, `failureCategories`, `confidenceInterval`, `componentSignals`, `issues`, and `signalsSalt`. A missing field is not a parse error. `signalsSalt` is never required. Paid owners may also receive `componentSignals` and `signalsSalt`. `clearrun verify` text and JSON omit absent fields.
 
 ### @clearrun/mcp
-- Version 0.3.1. Depends on `@clearrun/sdk` ^0.3.1 and `@clearrun/core-types` ^0.1.1. `packages/mcp/server.json` version fields are 0.3.1. `mcpName` stays `io.github.adepoco/clearrun-mcp`.
+- Version 0.3.1. Depends on `@clearrun/sdk` ^0.3.1 and `@clearrun/core-types` ^0.1.1. `packages/mcp/server.json` version fields are 0.3.1. `mcpName` stays `io.github.Adepoco/clearrun-mcp`.
 - `clearrun_score`, `clearrun_verify`, and `clearrun_chat` accept schema 1.1.0 coarse responses and coarse 1.0.0 public and free verdicts. Coarse 1.0.0 keeps `verdictId`, `schemaVersion`, `score`, `grade`, `risk`, `summary`, `timestamp`, `signature`, `signatureKeyId`, and `signatureAlg`. It omits `scoringVersion`, `failureCategories`, `confidenceInterval`, named signals, and `signalsDigest`. `presentHostedCall` still uses `isVerdict` from `@clearrun/core-types`. This repository does not publish the package.
 
 ## 0.3.0 (2026-11-10)
@@ -114,7 +114,7 @@ Login does not call the API. Scoring routes spend credits, and the account route
 
 ### @clearrun/mcp
 - Version 0.1.2. Does not change `@clearrun/sdk` (0.1.1), `@clearrun/cli` (0.1.1), or `@clearrun/core-types` (0.1.0).
-- `package.json` sets `mcpName` to `io.github.adepoco/clearrun-mcp` for the Official MCP Registry. `packages/mcp/server.json` is the registry manifest at version 0.1.2.
+- `package.json` sets `mcpName` to `io.github.Adepoco/clearrun-mcp` for the Official MCP Registry. `packages/mcp/server.json` is the registry manifest at version 0.1.2.
 - `docs/README.md` links the adoption guide (`docs/developers.md`) and the directory checklist (`docs/LISTINGS.md`).
 
 ## Unreleased

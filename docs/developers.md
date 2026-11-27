@@ -236,7 +236,7 @@ Ask the host in plain language, for example: "Use clearrun_score on this answer.
 
 A successful score has `scored: true`. A successful chat has `answered: true` and `scored: true`. A 200 body with no verdict, and a chat body with no answer and no verdict, is a tool error (`outcome` is `failed`). That error does not mean a verdict id was invalid.
 
-The registry name in `package.json` is `net.clearrun/clearrun-mcp`. The manifest is [packages/mcp/server.json](../packages/mcp/server.json). Directory submission steps are in [LISTINGS.md](./LISTINGS.md).
+The registry name in `package.json` is `io.github.Adepoco/clearrun-mcp`. The GitHub org login is `Adepoco`, and the Official MCP Registry treats that namespace as case-sensitive. The manifest is [packages/mcp/server.json](../packages/mcp/server.json). Directory submission steps are in [LISTINGS.md](./LISTINGS.md).
 
 Package page: [packages/mcp/README.md](../packages/mcp/README.md).
 
