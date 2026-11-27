@@ -19,6 +19,12 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Lint ClearRun action metadata
+        run: node scripts/lint_action_yml.js
+
+      - name: Test ClearRun action script
+        run: node --test action/test/score.test.js
+
       - name: Install dependencies
         run: npm ci
 

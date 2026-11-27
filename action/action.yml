@@ -1,0 +1,68 @@
+name: ClearRun score gate
+description: 'Score AI answer files and fail the job when a score misses the gate. Not a fact-checker.'
+author: Adepoco
+
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  paths:
+    description: 'Files or directories to score, one path per line. When omitted, clearrun.config.json paths are used.'
+    required: false
+    default: ''
+  threshold:
+    description: 'Fail the step if any input scores below this number, from 0 to 100. Overrides the config file.'
+    required: false
+    default: ''
+  max-issues:
+    description: 'Fail the step if any input has more issues than this whole number. Overrides the config file.'
+    required: false
+    default: ''
+  config:
+    description: 'Path to a ClearRun config file. The default is clearrun.config.json when that file exists.'
+    required: false
+    default: ''
+  api-key:
+    description: 'ClearRun API key. Pass secrets.CLEARRUN_API_KEY. The action never prints it.'
+    required: true
+  json:
+    description: 'Keep true. The action reads CLI JSON for the summary, the minimum score, and the report.'
+    required: false
+    default: 'true'
+  report-path:
+    description: 'Workspace path for the JSON report.'
+    required: false
+    default: clearrun-report.json
+
+outputs:
+  min-score:
+    description: 'Lowest numeric score across inputs. Empty when no input returned a numeric score.'
+    value: ${{ steps.score.outputs.min-score }}
+  passed:
+    description: 'true when every input passed the gate. false when any input missed it or the run failed.'
+    value: ${{ steps.score.outputs.passed }}
+  report-path:
+    description: 'Workspace path of the JSON report. Empty when the step failed before the CLI wrote one.'
+    value: ${{ steps.score.outputs.report-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Score files with ClearRun
+      id: score
+      shell: bash
+      env:
+        CLEARRUN_API_KEY: ${{ inputs.api-key }}
+        INPUT_PATHS: ${{ inputs.paths }}
+        INPUT_THRESHOLD: ${{ inputs.threshold }}
+        INPUT_MAX_ISSUES: ${{ inputs.max-issues }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_JSON: ${{ inputs.json }}
+        INPUT_REPORT_PATH: ${{ inputs.report-path }}
+      run: node "${{ github.action_path }}/score.js"
