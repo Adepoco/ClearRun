@@ -615,4 +615,33 @@ test('package copy does not use an em dash', () => {
   assert.match(readme, /clearrun_evaluate/);
   assert.match(readme, /clearrun_chat/);
   assert.match(readme, /clearrun_verify/);
+  assert.match(readme, /llms-install\.md/);
+});
+
+test('llms-install.md tells Cline how to install and invents no tools', () => {
+  const pkgGuide = readFileSync(join(__dirname, '..', 'llms-install.md'), 'utf8');
+  const rootGuide = readFileSync(join(__dirname, '..', '..', '..', 'llms-install.md'), 'utf8');
+  assert.equal(pkgGuide, rootGuide);
+  assert.equal(pkgGuide.includes('\u2014'), false);
+  assert.equal(pkgGuide.includes('\u2013'), false);
+  assert.equal(/reliable/i.test(pkgGuide), false);
+  assert.match(pkgGuide, /not a fact-checker/i);
+  assert.match(pkgGuide, /Node\.js 18 or newer/);
+  assert.match(pkgGuide, /"command": "npx"/);
+  assert.match(pkgGuide, /"args": \["-y", "@clearrun\/mcp"\]/);
+  assert.match(pkgGuide, /CLEARRUN_API_KEY/);
+  assert.match(pkgGuide, /YOUR_CLEARRUN_API_KEY/);
+  assert.match(pkgGuide, /https:\/\/api\.clearrun\.net\/account\/keys/);
+  assert.match(pkgGuide, /npx @clearrun\/cli login/);
+  assert.match(pkgGuide, /clearrun_score/);
+  assert.match(pkgGuide, /clearrun_evaluate/);
+  assert.match(pkgGuide, /clearrun_chat/);
+  assert.match(pkgGuide, /clearrun_verify/);
+  assert.match(pkgGuide, /clearrun_verify` does not read `CLEARRUN_API_KEY/);
+  assert.match(pkgGuide, /no 400x400 PNG logo/);
+  assert.equal(pkgGuide.includes('Evidence support'), false);
+  assert.equal(pkgGuide.includes('Reasoning integrity'), false);
+  for (const name of TOOL_NAMES) {
+    assert.match(pkgGuide, new RegExp(name));
+  }
 });
