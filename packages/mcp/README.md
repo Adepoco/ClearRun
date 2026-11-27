@@ -168,7 +168,7 @@ None of these tools fact-check the answer.
 | `clearrun_chat` | Ask the hosted API to generate an answer and score it (`POST /api/chat`). | `{ "message": "What is the capital of France?" }` |
 | `clearrun_verify` | Look up a verdict id (`GET /api/verify/{verdictId}`). | `{ "verdictId": "the-verdict-id" }` |
 
-`clearrun_score` and `clearrun_evaluate` also accept an optional `modelId`. `clearrun_evaluate` and `clearrun_chat` accept an optional `sessionId`.
+`clearrun_score` requires `responseText` (the answer text itself, not a file path or a verdict id) and accepts an optional `modelId`. `clearrun_evaluate` requires `responseText` and accepts optional `prompt`, `modelId`, and `sessionId`. `clearrun_chat` requires `message` (a prompt for a new answer, not text to score as-is) and accepts optional `modelId` and `sessionId`. `clearrun_verify` requires `verdictId`. Each field is described on the tool input schema. The process starts over stdio with no API key, so a client can list the tools before a key is set.
 
 In a host, ask in plain language, for example: "Use clearrun_score on this answer." The host fills the arguments.
 

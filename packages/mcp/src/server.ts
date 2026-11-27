@@ -26,7 +26,23 @@ export const SERVER_NAME = 'clearrun';
 export const SERVER_VERSION = '1.2.1';
 
 export const HONESTY_NOTE =
-  'ClearRun scores honesty, meaning whether an answer\'s confidence is backed by its reasoning. It is not a fact-checker. A high score does not mean the answer is true.';
+  'ClearRun scores whether an answer\'s confidence is backed by its reasoning, from 0 to 100. It does not check facts. A high score does not mean the answer is true.';
+
+/** Hosted score, evaluate, and chat calls spend credits and store a verdict. */
+const HOSTED_CALL_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: true,
+} as const;
+
+/** Public verdict lookup. Repeating an id reads the same stored result. */
+const VERIFY_ANNOTATIONS = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: true,
+} as const;
 
 export const TOOL_NAMES = ['clearrun_score', 'clearrun_evaluate', 'clearrun_chat', 'clearrun_verify'] as const;
 
@@ -137,15 +153,34 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
   server.registerTool(
     'clearrun_score',
     {
-      title: 'Score text for honesty',
+      title: 'Score text already written',
       description:
         'Score text that was already written. ' +
+        'Use this when you have the answer and do not have the prompt. ' +
+        'Use clearrun_evaluate when you also have the prompt. ' +
+        'Use clearrun_chat when the hosted API should write the answer. ' +
+        'Use clearrun_verify to look up a verdict id you already have. ' +
+        'Do not use this to check whether the answer is true. ' +
         HONESTY_NOTE +
-        ' Calls POST /api/score on the hosted ClearRun API. Returns the score, verdict, and scoring version when the API includes them. A receipt is included only when the API sends one. The tool is an error when the body has no verdict.',
+        ' Needs CLEARRUN_API_KEY. Calls POST https://api.clearrun.net/api/score, which spends credits and stores a verdict. ' +
+        'Without a key, the tool returns an error and does not call the API. ' +
+        'The tool is an error when the body has no verdict.',
       inputSchema: {
-        responseText: z.string().min(1).describe('The AI answer, or other text, to score for honesty.'),
-        modelId: z.string().min(1).optional().describe('Optional model id to send with the text.'),
+        responseText: z
+          .string()
+          .min(1)
+          .describe(
+            'The answer text to score. Required. Send the text itself, not a file path or a verdict id. ClearRun scores whether its confidence is backed by its reasoning, from 0 to 100. It does not check facts.'
+          ),
+        modelId: z
+          .string()
+          .min(1)
+          .optional()
+          .describe(
+            'Optional id of the model that wrote the text, passed through to the API. Omit it when you do not know the model.'
+          ),
       },
+      annotations: HOSTED_CALL_ANNOTATIONS,
     },
     async ({ responseText, modelId }) =>
       runHosted(options, 'score', (client) => client.score({ responseText, modelId }))
@@ -154,17 +189,46 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
   server.registerTool(
     'clearrun_evaluate',
     {
-      title: 'Evaluate an existing answer',
+      title: 'Score an answer with its prompt',
       description:
-        'Score an existing AI answer, including the prompt that produced it when you have it. ' +
+        'Score an existing answer together with the prompt that produced it. ' +
+        'Use this when you have both the answer and the prompt. ' +
+        'Use clearrun_score when you have only the answer. ' +
+        'Use clearrun_chat when the hosted API should write the answer. ' +
+        'Use clearrun_verify to look up a verdict id you already have. ' +
+        'Do not use this to check whether the answer is true. ' +
         HONESTY_NOTE +
-        ' Calls POST /api/evaluate on the hosted ClearRun API. Returns the score, verdict, and scoring version when the API includes them. A receipt is included only when the API sends one. The tool is an error when the body has no verdict.',
+        ' Needs CLEARRUN_API_KEY. Calls POST https://api.clearrun.net/api/evaluate, which spends credits and stores a verdict. ' +
+        'Without a key, the tool returns an error and does not call the API. ' +
+        'The tool is an error when the body has no verdict.',
       inputSchema: {
-        responseText: z.string().min(1).describe('The AI answer to score for honesty.'),
-        prompt: z.string().min(1).optional().describe('The prompt that produced the answer, when you have it.'),
-        modelId: z.string().min(1).optional().describe('Optional model id to send with the answer.'),
-        sessionId: z.string().min(1).optional().describe('Optional session id to send to the API.'),
+        responseText: z
+          .string()
+          .min(1)
+          .describe(
+            'The existing answer to score. Required. Send the text itself, not a file path or a verdict id.'
+          ),
+        prompt: z
+          .string()
+          .min(1)
+          .optional()
+          .describe(
+            'The prompt that produced the answer. Include it when you have it. Omit it only when the prompt is unknown. clearrun_score is the tool for an answer with no prompt.'
+          ),
+        modelId: z
+          .string()
+          .min(1)
+          .optional()
+          .describe(
+            'Optional id of the model that wrote the answer, passed through to the API. Omit it when you do not know the model.'
+          ),
+        sessionId: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('Optional session id to attach this call to an earlier hosted session. Omit it for a standalone score.'),
       },
+      annotations: HOSTED_CALL_ANNOTATIONS,
     },
     async ({ responseText, prompt, modelId, sessionId }) =>
       runHosted(options, 'evaluate', (client) => client.evaluate({ responseText, prompt, modelId, sessionId }))
@@ -173,16 +237,36 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
   server.registerTool(
     'clearrun_chat',
     {
-      title: 'Generate an answer and score it',
+      title: 'Write an answer and score it',
       description:
-        'Send a message to the hosted ClearRun API, which generates an answer and scores it. ' +
+        'Ask the hosted ClearRun API to write an answer and score it. ' +
+        'Use this when you want a new answer, not a score of text you already have. ' +
+        'Use clearrun_score or clearrun_evaluate for text that was already written. ' +
+        'Use clearrun_verify to look up a verdict id you already have. ' +
+        'Do not use this to check whether an existing answer is true. ' +
         HONESTY_NOTE +
-        ' Calls POST /api/chat. Returns the answer text plus the score, verdict, and scoring version when the API includes them. A receipt is included only when the API sends one. The tool is an error when the body has no answer and no verdict.',
+        ' Needs CLEARRUN_API_KEY. Calls POST https://api.clearrun.net/api/chat, which spends credits, writes an answer, and stores a verdict. ' +
+        'Without a key, the tool returns an error and does not call the API. ' +
+        'The tool is an error when the body has no answer and no verdict.',
       inputSchema: {
-        message: z.string().min(1).describe('The user message to send to the hosted API.'),
-        modelId: z.string().min(1).optional().describe('Optional model id to send with the message.'),
-        sessionId: z.string().min(1).optional().describe('Optional session id to send to the API.'),
+        message: z
+          .string()
+          .min(1)
+          .describe(
+            'The user message for the hosted API to answer and then score. Required. This is a prompt, not text to score as-is. Use clearrun_score or clearrun_evaluate for text that was already written.'
+          ),
+        modelId: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('Optional model id for the hosted API to use when writing the answer. Omit it to let the API choose.'),
+        sessionId: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('Optional session id to continue an earlier hosted chat. Omit it to start without a session.'),
       },
+      annotations: HOSTED_CALL_ANNOTATIONS,
     },
     async ({ message, modelId, sessionId }) =>
       runHosted(options, 'chat', (client) => client.chat({ message, modelId, sessionId }))
@@ -191,14 +275,25 @@ export function createClearRunServer(options: ClearRunMcpOptions = {}): McpServe
   server.registerTool(
     'clearrun_verify',
     {
-      title: 'Verify a verdict id',
+      title: 'Look up a stored verdict',
       description:
-        'Look up a ClearRun verdict id on the public verification endpoint (GET /api/verify/{verdictId}). No API key is sent. ' +
-        HONESTY_NOTE +
-        ' Returns the verification result when the API returns one. The tool is an error when the body is not a verification result. A receipt is included only when the API sends one.',
+        'Look up a stored ClearRun verdict by its id. ' +
+        'Use this when you already have a verdict id. ' +
+        'Use clearrun_score or clearrun_evaluate to score text you already have, and clearrun_chat when the hosted API should write an answer. ' +
+        'Do not use this to score new text or to check facts. ' +
+        'The stored score, when the API includes one, says whether an answer\'s confidence is backed by its reasoning, from 0 to 100. ' +
+        'It does not check facts. A high score does not mean the answer is true. ' +
+        'Sends no API key. Calls GET https://api.clearrun.net/api/verify/{verdictId}, which reads the stored verdict, spends no credits, and does not change it. ' +
+        'The tool is an error when the body is not a verification result.',
       inputSchema: {
-        verdictId: z.string().min(1).describe('The verdict id to look up.'),
+        verdictId: z
+          .string()
+          .min(1)
+          .describe(
+            'The verdict id to look up, as returned by an earlier clearrun_score, clearrun_evaluate, or clearrun_chat call. Required. This is an id, not the answer text.'
+          ),
       },
+      annotations: VERIFY_ANNOTATIONS,
     },
     async ({ verdictId }) => runVerify(options, verdictId)
   );

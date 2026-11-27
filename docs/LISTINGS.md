@@ -66,12 +66,20 @@ This server is local stdio. The URL flow at [https://smithery.ai/new](https://sm
 
 ## Glama
 
-The [punkpeye/awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers) bot tells submitters to list on Glama first, at [https://glama.ai/mcp/servers](https://glama.ai/mcp/servers).
+Listing: [https://glama.ai/mcp/servers/Adepoco/ClearRun](https://glama.ai/mcp/servers/Adepoco/ClearRun). Docs checked 27 November 2026: [glama.json](https://glama.ai/blog/2025-07-08-what-is-glamajson), [schema](https://glama.ai/mcp/schemas/server.json), [how indexing builds a Dockerfile](https://glama.ai/mcp/methodology), [how to make a release](https://glama.ai/blog/2026-03-15-how-to-make-a-release).
 
-1. Sign in at [https://glama.ai](https://glama.ai).
-2. Submit the GitHub repository [https://github.com/Adepoco/ClearRun](https://github.com/Adepoco/ClearRun). If the form asks for a subdirectory, use `packages/mcp`.
-3. Wait until the listing URL loads. The badge URL the awesome list uses looks like `https://glama.ai/mcp/servers/Adepoco/ClearRun`.
-4. Their bot has asked for a successful Docker image build and a GitHub release. If the current checks still require those, a release tag and an image are needed before the listing passes. Confirm on the Glama page. This checklist could not open a separate submit form; `https://glama.ai/mcp/servers/new` is a search page, not a form.
+Glama builds a container and runs `initialize` plus `tools/list` over stdio with no secrets. This server already starts that way. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return an error until `CLEARRUN_API_KEY` is set. `clearrun_verify` does not read the key.
+
+- [glama.json](../glama.json) at the repository root names GitHub user `rlshaw-ml`. The schema allows `$schema` and `maintainers` only.
+- [Dockerfile](../Dockerfile) at the repository root builds `@clearrun/mcp` from this repo and starts `node packages/mcp/dist/index.js` on stdio. It does not install a published npm tarball, because 1.2.1 is not on npm, and it does not bake in a key. No port is published.
+- [LICENSE](../LICENSE) is MIT, which Glama's license check looks for.
+
+A Glama release is not a GitHub release. This repository does not publish it. After the files above are on `main`, someone signed in as `rlshaw-ml` still has to:
+
+1. Open the listing Score tab and claim the server so Glama reads `glama.json`. Claiming again picks up a new `glama.json`.
+2. Sync the server so the build uses the latest `main`. Leave any pinned commit empty.
+3. Open [the Dockerfile admin page](https://glama.ai/mcp/servers/Adepoco/ClearRun/admin/dockerfile). If Glama uses the repository Dockerfile, keep that. If the form asks for build steps and command arguments, use `npm ci` then `npm run build -w @clearrun/mcp`, and command arguments `node` and `packages/mcp/dist/index.js`. Leave `CLEARRUN_API_KEY` unset and placeholder parameters empty so the inspector can list tools.
+4. Click Deploy. When the build test passes, click Make Release and publish. That is what adds the deployable badge and runs the quality score.
 
 ## mcp.so
 
