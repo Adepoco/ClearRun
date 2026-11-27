@@ -106,6 +106,8 @@ SDK methods and MCP tools:
 | `chat` / `clearrun_chat` | Ask the hosted API to generate an answer and score it (`POST /api/chat`). |
 | `verify` / `clearrun_verify` | Look up a verdict id (`GET /api/verify/{id}`). |
 
+The MCP process speaks stdio. It starts and lists these tools with no API key. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` return an error on call until `CLEARRUN_API_KEY` is set. `clearrun_verify` does not read the key. Each tool input schema describes its arguments: `responseText` or `message` is required for a new call, and `verdictId` is required for a lookup.
+
 CLI (`score` scores text, `verify` looks up a verdict id):
 
 ```bash

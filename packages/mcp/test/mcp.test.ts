@@ -80,7 +80,12 @@ test('missing key: score, evaluate, and chat return the key error and do not cal
       [...TOOL_NAMES].sort()
     );
     for (const tool of listed.tools) {
-      assert.match(tool.description ?? '', /not a fact-checker/i);
+      const description = tool.description ?? '';
+      assert.match(description, /does not check facts|to check facts|to check whether/i);
+      assert.equal(description.toLowerCase().includes('fact-checker'), false);
+      assert.equal(/reliable/i.test(description), false);
+      assert.equal(description.includes('\u2014'), false);
+      assert.equal(description.includes('\u2013'), false);
     }
 
     const callsFor: Array<[string, Record<string, unknown>]> = [
@@ -101,6 +106,56 @@ test('missing key: score, evaluate, and chat return the key error and do not cal
     }
   });
   assert.equal(calls.length, 0);
+});
+
+test('tool definitions describe the job, the arguments, and the key boundary', async () => {
+  await withClient({ apiKey: '   ', env: {} }, async (client) => {
+    const listed = await client.listTools();
+    const byName = new Map(listed.tools.map((tool) => [tool.name, tool]));
+
+    for (const name of TOOL_NAMES) {
+      const tool = byName.get(name);
+      assert.ok(tool, name);
+      const description = tool.description ?? '';
+      assert.match(description, /0 to 100/);
+      assert.match(description, /confidence is backed by its reasoning/);
+      assert.match(description, /does not check facts|to check facts/);
+      assert.equal(description.toLowerCase().includes('fact-checker'), false);
+      assert.equal(/reliable/i.test(description), false);
+      assert.equal(description.includes('\u2014'), false);
+      assert.equal(description.includes('\u2013'), false);
+      assert.equal((tool.title ?? '').length > name.length, true);
+
+      const schema = tool.inputSchema as {
+        properties?: Record<string, { description?: string }>;
+      };
+      const properties = schema.properties ?? {};
+      assert.ok(Object.keys(properties).length > 0, name);
+      for (const [field, property] of Object.entries(properties)) {
+        const fieldDescription = property.description ?? '';
+        assert.ok(fieldDescription.trim().length > 0, `${name}.${field}`);
+        assert.equal(/reliable/i.test(fieldDescription), false, `${name}.${field}`);
+        assert.equal(fieldDescription.includes('\u2014'), false, `${name}.${field}`);
+        assert.equal(fieldDescription.includes('\u2013'), false, `${name}.${field}`);
+      }
+    }
+
+    const score = byName.get('clearrun_score');
+    assert.equal(score?.annotations?.readOnlyHint, false);
+    assert.equal(score?.annotations?.destructiveHint, false);
+    assert.equal(score?.annotations?.idempotentHint, false);
+    assert.equal(score?.annotations?.openWorldHint, true);
+    assert.match(score?.description ?? '', /CLEARRUN_API_KEY/);
+    assert.match(score?.description ?? '', /clearrun_evaluate/);
+
+    const verify = byName.get('clearrun_verify');
+    assert.equal(verify?.annotations?.readOnlyHint, true);
+    assert.equal(verify?.annotations?.destructiveHint, false);
+    assert.equal(verify?.annotations?.idempotentHint, true);
+    assert.equal(verify?.annotations?.openWorldHint, true);
+    assert.match(verify?.description ?? '', /Sends no API key/);
+    assert.match(verify?.inputSchema.properties?.verdictId?.description ?? '', /verdict id/i);
+  });
 });
 
 test('missing key: clearrun_verify looks up the id and does not send a key', async () => {
