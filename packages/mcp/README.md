@@ -59,6 +59,8 @@ node packages/mcp/dist/index.js
 
 From a clone, point the host `command` at `node` and `args` at the absolute path of `packages/mcp/dist/index.js`. Keep the same `env` block.
 
+Agents installing this server for Cline should follow [llms-install.md](llms-install.md). The same guide is at the repository root: [llms-install.md](../../llms-install.md).
+
 ## Host configuration
 
 Each block runs `npx -y @clearrun/mcp` and passes `CLEARRUN_API_KEY` in `env`. Replace `YOUR_CLEARRUN_API_KEY` with a key from the keys page. A verified free account can create one free developer key. On Pro, Business, and Enterprise, API access must be turned on. `clearrun_score`, `clearrun_evaluate`, and `clearrun_chat` need that key. Omit `env` only when the host will call `clearrun_verify` alone. Prefer your host's secret input when it has one, so the key is not stored in the repo.
@@ -200,6 +202,7 @@ That public request does not use an API key. The MCP tool `clearrun_verify` does
 - SDK: [https://www.npmjs.com/package/@clearrun/sdk](https://www.npmjs.com/package/@clearrun/sdk)
 - CLI: [https://www.npmjs.com/package/@clearrun/cli](https://www.npmjs.com/package/@clearrun/cli)
 - Developer guide: [docs/developers.md](https://github.com/Adepoco/ClearRun/blob/main/docs/developers.md)
+- Cline install guide: [llms-install.md](llms-install.md)
 
 ClearRun is made by Adepoco, a California corporation. Contact: [contact@adepoco.com](mailto:contact@adepoco.com).
 
