@@ -3,7 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "description": "ClearRun open-core. Honesty verdict contract, SDK, CLI, vendors, security, and scoring UI mapping.",
+  "description": "Open SDK, CLI and MCP client for ClearRun. Calls the hosted API at api.clearrun.net; scoring runs server side.",
+  "homepage": "https://clearrun.net",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adepoco/ClearRun.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Adepoco/ClearRun/issues"
+  },
   "workspaces": [
     "packages/core-types",
     "packages/cli",
